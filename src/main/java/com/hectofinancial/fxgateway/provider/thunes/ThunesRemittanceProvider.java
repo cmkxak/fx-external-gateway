@@ -4,12 +4,15 @@ import com.hectofinancial.fxgateway.core.provider.RemittanceProvider;
 import com.hectofinancial.fxgateway.provider.thunes.client.ThunesClient;
 import com.hectofinancial.fxgateway.provider.thunes.dto.CpiRequest;
 import com.hectofinancial.fxgateway.provider.thunes.dto.CpiResponse;
+import com.hectofinancial.fxgateway.provider.thunes.dto.Payer;
 import com.hectofinancial.fxgateway.provider.thunes.dto.QuotationRequest;
 import com.hectofinancial.fxgateway.provider.thunes.dto.QuotationResponse;
 import com.hectofinancial.fxgateway.provider.thunes.dto.TransactionRequest;
 import com.hectofinancial.fxgateway.provider.thunes.dto.TransactionResponse;
 import com.hectofinancial.fxgateway.provider.thunes.dto.VerificationRequest;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 /**
  * Thunes 망 구현체.
@@ -36,6 +39,17 @@ public class ThunesRemittanceProvider implements RemittanceProvider {
     @Override
     public String network() {
         return NETWORK;
+    }
+
+    /** 지급처 목록 조회 (Discovery). 견적 전 payer_id 확보용. */
+    public List<Payer> listPayers(Integer page, Integer perPage, Integer serviceId,
+                                  String countryIsoCode, String currency) {
+        return thunes.getPayers(page, perPage, serviceId, countryIsoCode, currency);
+    }
+
+    /** 지급처 단건 조회. */
+    public Payer getPayer(long id) {
+        return thunes.getPayer(id);
     }
 
     /** 1단계: 견적 생성 (환율/수수료 고정). */

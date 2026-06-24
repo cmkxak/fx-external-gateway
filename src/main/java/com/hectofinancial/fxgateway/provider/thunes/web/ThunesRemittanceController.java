@@ -3,6 +3,7 @@ package com.hectofinancial.fxgateway.provider.thunes.web;
 import com.hectofinancial.fxgateway.provider.thunes.ThunesRemittanceProvider;
 import com.hectofinancial.fxgateway.provider.thunes.dto.CpiRequest;
 import com.hectofinancial.fxgateway.provider.thunes.dto.CpiResponse;
+import com.hectofinancial.fxgateway.provider.thunes.dto.Payer;
 import com.hectofinancial.fxgateway.provider.thunes.dto.QuotationRequest;
 import com.hectofinancial.fxgateway.provider.thunes.dto.QuotationResponse;
 import com.hectofinancial.fxgateway.provider.thunes.dto.TransactionRequest;
@@ -11,11 +12,15 @@ import com.hectofinancial.fxgateway.provider.thunes.dto.VerificationRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 /**
  * Thunes 망 인바운드 엔드포인트. API 서버가 송금 시퀀스의 각 단계를 개별 호출한다.
@@ -30,6 +35,23 @@ public class ThunesRemittanceController {
 
     public ThunesRemittanceController(ThunesRemittanceProvider provider) {
         this.provider = provider;
+    }
+
+    /** Discovery: 지급처 목록 (견적 전 payer_id 확보용). */
+    @GetMapping("/payers")
+    public ResponseEntity<List<Payer>> listPayers(
+            @RequestParam(name = "page", required = false) Integer page,
+            @RequestParam(name = "per_page", required = false) Integer perPage,
+            @RequestParam(name = "service_id", required = false) Integer serviceId,
+            @RequestParam(name = "country_iso_code", required = false) String countryIsoCode,
+            @RequestParam(name = "currency", required = false) String currency) {
+        return ResponseEntity.ok(provider.listPayers(page, perPage, serviceId, countryIsoCode, currency));
+    }
+
+    /** Discovery: 지급처 단건. */
+    @GetMapping("/payers/{id}")
+    public ResponseEntity<Payer> getPayer(@PathVariable long id) {
+        return ResponseEntity.ok(provider.getPayer(id));
     }
 
     /** ① 견적 생성 */

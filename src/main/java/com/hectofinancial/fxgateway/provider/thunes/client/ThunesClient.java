@@ -3,12 +3,14 @@ package com.hectofinancial.fxgateway.provider.thunes.client;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hectofinancial.fxgateway.provider.thunes.dto.CpiRequest;
 import com.hectofinancial.fxgateway.provider.thunes.dto.CpiResponse;
+import com.hectofinancial.fxgateway.provider.thunes.dto.Payer;
 import com.hectofinancial.fxgateway.provider.thunes.dto.QuotationRequest;
 import com.hectofinancial.fxgateway.provider.thunes.dto.QuotationResponse;
 import com.hectofinancial.fxgateway.provider.thunes.dto.ThunesErrorResponse;
 import com.hectofinancial.fxgateway.provider.thunes.dto.TransactionRequest;
 import com.hectofinancial.fxgateway.provider.thunes.dto.TransactionResponse;
 import com.hectofinancial.fxgateway.provider.thunes.dto.VerificationRequest;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.client.ClientHttpResponse;
@@ -17,12 +19,15 @@ import org.springframework.web.client.RestClient;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import static com.hectofinancial.fxgateway.provider.thunes.client.ThunesUri.CONFIRM_TRANSACTION;
 import static com.hectofinancial.fxgateway.provider.thunes.client.ThunesUri.CREATE_QUOTATION;
 import static com.hectofinancial.fxgateway.provider.thunes.client.ThunesUri.CREATE_TRANSACTION;
 import static com.hectofinancial.fxgateway.provider.thunes.client.ThunesUri.CREDIT_PARTY_INFORMATION;
+import static com.hectofinancial.fxgateway.provider.thunes.client.ThunesUri.GET_PAYER_BY_ID;
 import static com.hectofinancial.fxgateway.provider.thunes.client.ThunesUri.GET_PAYERS;
 import static com.hectofinancial.fxgateway.provider.thunes.client.ThunesUri.GET_TRANSACTION;
 import static com.hectofinancial.fxgateway.provider.thunes.client.ThunesUri.GET_TRANSACTION_BY_EXTERNAL_ID;
@@ -70,8 +75,29 @@ public class ThunesClient {
         return rc.get().uri(LIST_SERVICES.path()).retrieve().body(String.class);
     }
 
-    public String getPayers() {
-        return rc.get().uri(GET_PAYERS.path()).retrieve().body(String.class);
+    /** 지급처 목록 (필터 optional). */
+    public List<Payer> getPayers(Integer page, Integer perPage, Integer serviceId,
+                                 String countryIsoCode, String currency) {
+        return rc.get()
+                .uri(b -> b.path(GET_PAYERS.path())
+                        .queryParamIfPresent("page", Optional.ofNullable(page))
+                        .queryParamIfPresent("per_page", Optional.ofNullable(perPage))
+                        .queryParamIfPresent("service_id", Optional.ofNullable(serviceId))
+                        .queryParamIfPresent("country_iso_code", Optional.ofNullable(countryIsoCode))
+                        .queryParamIfPresent("currency", Optional.ofNullable(currency))
+                        .build())
+                .retrieve()
+                .onStatus(IS_ERROR, this::raiseThunesError)
+                .body(new ParameterizedTypeReference<List<Payer>>() {});
+    }
+
+    /** 지급처 단건 조회. */
+    public Payer getPayer(long id) {
+        return rc.get()
+                .uri(GET_PAYER_BY_ID.path(), id)
+                .retrieve()
+                .onStatus(IS_ERROR, this::raiseThunesError)
+                .body(Payer.class);
     }
 
     // ----- 수취인 검증 -----
