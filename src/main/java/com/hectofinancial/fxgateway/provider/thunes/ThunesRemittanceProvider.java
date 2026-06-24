@@ -2,11 +2,13 @@ package com.hectofinancial.fxgateway.provider.thunes;
 
 import com.hectofinancial.fxgateway.core.provider.RemittanceProvider;
 import com.hectofinancial.fxgateway.provider.thunes.client.ThunesClient;
-import com.hectofinancial.fxgateway.provider.thunes.dto.ThunesDtos.QuotationRequest;
-import com.hectofinancial.fxgateway.provider.thunes.dto.ThunesDtos.QuotationResponse;
-import com.hectofinancial.fxgateway.provider.thunes.dto.ThunesDtos.TransactionRequest;
-import com.hectofinancial.fxgateway.provider.thunes.dto.ThunesDtos.TransactionResponse;
-import com.hectofinancial.fxgateway.provider.thunes.dto.ThunesDtos.VerificationRequest;
+import com.hectofinancial.fxgateway.provider.thunes.dto.CpiRequest;
+import com.hectofinancial.fxgateway.provider.thunes.dto.CpiResponse;
+import com.hectofinancial.fxgateway.provider.thunes.dto.QuotationRequest;
+import com.hectofinancial.fxgateway.provider.thunes.dto.QuotationResponse;
+import com.hectofinancial.fxgateway.provider.thunes.dto.TransactionRequest;
+import com.hectofinancial.fxgateway.provider.thunes.dto.TransactionResponse;
+import com.hectofinancial.fxgateway.provider.thunes.dto.VerificationRequest;
 import org.springframework.stereotype.Component;
 
 /**
@@ -44,6 +46,11 @@ public class ThunesRemittanceProvider implements RemittanceProvider {
     /** 수취인 검증 (거래 생성 전 수행). type = C2C | C2B | B2C | B2B */
     public String verifyBeneficiary(String payerId, String type, VerificationRequest req) {
         return thunes.verifyCreditParty(payerId, type, req);
+    }
+
+    /** 수취인 정보 조회(CPI). type = C2C | C2B | B2C | B2B */
+    public CpiResponse retrieveBeneficiaryInformation(String payerId, String type, CpiRequest req) {
+        return thunes.retrieveCreditPartyInformation(payerId, type, req);
     }
 
     /** 거래 생성 (견적 ID 기준). 확정 전까지는 미확정 상태. */

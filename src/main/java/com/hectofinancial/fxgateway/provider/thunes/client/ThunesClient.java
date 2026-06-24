@@ -1,19 +1,28 @@
 package com.hectofinancial.fxgateway.provider.thunes.client;
 
-import com.hectofinancial.fxgateway.provider.thunes.dto.ThunesDtos.QuotationRequest;
-import com.hectofinancial.fxgateway.provider.thunes.dto.ThunesDtos.QuotationResponse;
-import com.hectofinancial.fxgateway.provider.thunes.dto.ThunesDtos.TransactionRequest;
-import com.hectofinancial.fxgateway.provider.thunes.dto.ThunesDtos.TransactionResponse;
-import com.hectofinancial.fxgateway.provider.thunes.dto.ThunesDtos.VerificationRequest;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hectofinancial.fxgateway.provider.thunes.dto.CpiRequest;
+import com.hectofinancial.fxgateway.provider.thunes.dto.CpiResponse;
+import com.hectofinancial.fxgateway.provider.thunes.dto.QuotationRequest;
+import com.hectofinancial.fxgateway.provider.thunes.dto.QuotationResponse;
+import com.hectofinancial.fxgateway.provider.thunes.dto.ThunesErrorResponse;
+import com.hectofinancial.fxgateway.provider.thunes.dto.TransactionRequest;
+import com.hectofinancial.fxgateway.provider.thunes.dto.TransactionResponse;
+import com.hectofinancial.fxgateway.provider.thunes.dto.VerificationRequest;
+import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.function.Predicate;
 
 import static com.hectofinancial.fxgateway.provider.thunes.client.ThunesUri.CONFIRM_TRANSACTION;
 import static com.hectofinancial.fxgateway.provider.thunes.client.ThunesUri.CREATE_QUOTATION;
 import static com.hectofinancial.fxgateway.provider.thunes.client.ThunesUri.CREATE_TRANSACTION;
+import static com.hectofinancial.fxgateway.provider.thunes.client.ThunesUri.CREDIT_PARTY_INFORMATION;
 import static com.hectofinancial.fxgateway.provider.thunes.client.ThunesUri.GET_PAYERS;
 import static com.hectofinancial.fxgateway.provider.thunes.client.ThunesUri.GET_TRANSACTION;
 import static com.hectofinancial.fxgateway.provider.thunes.client.ThunesUri.GET_TRANSACTION_BY_EXTERNAL_ID;
@@ -31,9 +40,24 @@ public class ThunesClient {
     private static final Predicate<HttpStatusCode> IS_ERROR = HttpStatusCode::isError;
 
     private final RestClient rc;
+    private final ObjectMapper objectMapper;
 
-    public ThunesClient(RestClient thunesRestClient) {
+    public ThunesClient(RestClient thunesRestClient, ObjectMapper objectMapper) {
         this.rc = thunesRestClient;
+        this.objectMapper = objectMapper;
+    }
+
+    /** 비-2xx 응답을 ThunesApiException 으로 변환. errors[] 를 파싱해 구조화한다. */
+    private void raiseThunesError(HttpRequest request, ClientHttpResponse response) throws IOException {
+        int status = response.getStatusCode().value();
+        String body = new String(response.getBody().readAllBytes(), StandardCharsets.UTF_8);
+        ThunesErrorResponse parsed = null;
+        try {
+            parsed = objectMapper.readValue(body, ThunesErrorResponse.class);
+        } catch (Exception ignore) {
+            // JSON 이 아니거나 예상 외 형태면 raw 만 보존
+        }
+        throw new ThunesApiException(status, parsed, body);
     }
 
     // ----- Connectivity / Discovery / Account -----
@@ -60,10 +84,20 @@ public class ThunesClient {
                 .uri(VERIFY_CREDIT_PARTY.path(), payerId, type)
                 .body(req)
                 .retrieve()
-                .onStatus(IS_ERROR, (rq, rs) -> {
-                    throw ThunesApiException.from(rs);
-                })
+                .onStatus(IS_ERROR, this::raiseThunesError)
                 .body(String.class);
+    }
+
+    /**
+     * 수취인 정보 조회(CPI). type = C2C | C2B | B2C | B2B
+     */
+    public CpiResponse retrieveCreditPartyInformation(String payerId, String type, CpiRequest req) {
+        return rc.post()
+                .uri(CREDIT_PARTY_INFORMATION.path(), payerId, type)
+                .body(req)
+                .retrieve()
+                .onStatus(IS_ERROR, this::raiseThunesError)
+                .body(CpiResponse.class);
     }
 
     // ----- 견적 -----
@@ -73,9 +107,7 @@ public class ThunesClient {
                 .uri(CREATE_QUOTATION.path())
                 .body(req)
                 .retrieve()
-                .onStatus(IS_ERROR, (rq, rs) -> {
-                    throw ThunesApiException.from(rs);
-                })
+                .onStatus(IS_ERROR, this::raiseThunesError)
                 .body(QuotationResponse.class);
     }
 
@@ -86,9 +118,7 @@ public class ThunesClient {
                 .uri(CREATE_TRANSACTION.path(), quotationId)
                 .body(req)
                 .retrieve()
-                .onStatus(IS_ERROR, (rq, rs) -> {
-                    throw ThunesApiException.from(rs);
-                })
+                .onStatus(IS_ERROR, this::raiseThunesError)
                 .body(TransactionResponse.class);
     }
 
@@ -99,9 +129,7 @@ public class ThunesClient {
         return rc.post()
                 .uri(CONFIRM_TRANSACTION.path(), transactionId)
                 .retrieve()
-                .onStatus(IS_ERROR, (rq, rs) -> {
-                    throw ThunesApiException.from(rs);
-                })
+                .onStatus(IS_ERROR, this::raiseThunesError)
                 .body(TransactionResponse.class);
     }
 

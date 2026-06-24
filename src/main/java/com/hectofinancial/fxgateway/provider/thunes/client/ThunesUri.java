@@ -10,6 +10,7 @@ public enum ThunesUri {
     LIST_SERVICES("/v2/money-transfer/services"),
     GET_PAYERS("/v2/money-transfer/payers"),
     VERIFY_CREDIT_PARTY("/v2/money-transfer/payers/{payerId}/{type}/credit-party-verification"),
+    CREDIT_PARTY_INFORMATION("/v2/money-transfer/payers/{payerId}/{type}/credit-party-information"),
     CREATE_QUOTATION("/v2/money-transfer/quotations"),
     CREATE_TRANSACTION("/v2/money-transfer/quotations/{quotationId}/transactions"),
     CONFIRM_TRANSACTION("/v2/money-transfer/transactions/{transactionId}/confirm"),
