@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: fx-gateway
+  jackson:
+    property-naming-strategy: SNAKE_CASE   # camelCase(record) <-> snake_case(Thunes JSON)
+    default-property-inclusion: non_null
+    generator:
+      write-bigdecimal-as-plain: true      # BigDecimal 지수표기(1E+2) 방지 → 평문 출력
+
+server:
+  port: 8080
+
+thunes:
+  base-url: ${THUNES_BASE_URL:https://sandbox.example.thunes.com}  # Thunes 발급 호스트(Sandbox/Prod)
+  api-key: ${THUNES_API_KEY:}
+  api-secret: ${THUNES_API_SECRET:}
+  connect-timeout: 5s
+  read-timeout: 20s

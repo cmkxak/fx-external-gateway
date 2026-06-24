@@ -1,0 +1,28 @@
+package com.hectofinancial.fxgateway.provider.thunes.client;
+
+/**
+ * Thunes MoneyTransfer V2 엔드포인트 경로 상수.
+ * 경로 내 {placeholder} 는 RestClient.uri(path, args...) 의 URI 변수로 치환된다.
+ */
+public enum ThunesUri {
+
+    PING("/ping"),
+    LIST_SERVICES("/v2/money-transfer/services"),
+    GET_PAYERS("/v2/money-transfer/payers"),
+    VERIFY_CREDIT_PARTY("/v2/money-transfer/payers/{payerId}/{type}/credit-party-verification"),
+    CREATE_QUOTATION("/v2/money-transfer/quotations"),
+    CREATE_TRANSACTION("/v2/money-transfer/quotations/{quotationId}/transactions"),
+    CONFIRM_TRANSACTION("/v2/money-transfer/transactions/{transactionId}/confirm"),
+    GET_TRANSACTION("/v2/money-transfer/transactions/{transactionId}"),
+    GET_TRANSACTION_BY_EXTERNAL_ID("/v2/money-transfer/transactions/ext-{externalId}");
+
+    private final String path;
+
+    ThunesUri(String path) {
+        this.path = path;
+    }
+
+    public String path() {
+        return path;
+    }
+}
