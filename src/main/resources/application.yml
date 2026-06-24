@@ -1,17 +1,20 @@
 spring:
   application:
     name: fx-gateway
+  profiles:
+    default: local                         # 프로파일 미지정 시 local 로 동작
   jackson:
-    property-naming-strategy: SNAKE_CASE   # camelCase(record) <-> snake_case(Thunes JSON)
+    property-naming-strategy: SNAKE_CASE    # camelCase(record) <-> snake_case(Thunes JSON)
     default-property-inclusion: non_null
     generator:
-      write-bigdecimal-as-plain: true      # BigDecimal 지수표기(1E+2) 방지 → 평문 출력
+      write-bigdecimal-as-plain: true       # BigDecimal 지수표기(1E+2) 방지 → 평문 출력
 
 server:
   port: 8080
 
+# 프로파일 공통 값만. base-url 은 application-{profile}.yml 에서 지정.
+# api-key / api-secret 은 비밀 → 절대 여기 직접 박지 말 것. 환경변수 또는 application-local.yml(gitignore)로만 주입.
 thunes:
-  base-url: ${THUNES_BASE_URL:https://sandbox.example.thunes.com}  # Thunes 발급 호스트(Sandbox/Prod)
   api-key: ${THUNES_API_KEY:}
   api-secret: ${THUNES_API_SECRET:}
   connect-timeout: 5s
