@@ -10,7 +10,9 @@ public enum ThunesUri {
     CREDIT_PARTY_INFORMATION("/v2/money-transfer/payers/{payerId}/{type}/credit-party-information"),
     CREATE_QUOTATION("/v2/money-transfer/quotations"),
     CREATE_TRANSACTION("/v2/money-transfer/quotations/{quotationId}/transactions"),
+    CREATE_TRANSACTION_BY_EXT_QUOTATION("/v2/money-transfer/quotations/ext-{externalId}/transactions"),
     CONFIRM_TRANSACTION("/v2/money-transfer/transactions/{transactionId}/confirm"),
+    CONFIRM_TRANSACTION_BY_EXT("/v2/money-transfer/transactions/ext-{externalId}/confirm"),
     GET_TRANSACTION("/v2/money-transfer/transactions/{transactionId}"),
     GET_TRANSACTION_BY_EXTERNAL_ID("/v2/money-transfer/transactions/ext-{externalId}");
 

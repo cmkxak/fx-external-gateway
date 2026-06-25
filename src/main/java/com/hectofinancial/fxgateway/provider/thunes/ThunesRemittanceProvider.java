@@ -72,8 +72,18 @@ public class ThunesRemittanceProvider implements RemittanceProvider {
         return thunes.createTransaction(quotationId, req);
     }
 
+    /** 거래 생성 (견적 external_id 기준 = 우리 번호). 응답 유실 시 재시도/복구에 사용. */
+    public TransactionResponse createTransactionByQuotationExternalId(String quotationExternalId, TransactionRequest req) {
+        return thunes.createTransactionByQuotationExternalId(quotationExternalId, req);
+    }
+
     /** [선택] 거래 확정 — 이 호출부터 실제 자금 이동. 최종 상태는 콜백/조회로 확인. */
     public TransactionResponse confirmTransaction(long transactionId) {
         return thunes.confirmTransaction(transactionId);
+    }
+
+    /** 거래 확정 (external_id 기준 = 우리 번호). 멱등/복구용. */
+    public TransactionResponse confirmTransactionByExternalId(String transactionExternalId) {
+        return thunes.confirmTransactionByExternalId(transactionExternalId);
     }
 }

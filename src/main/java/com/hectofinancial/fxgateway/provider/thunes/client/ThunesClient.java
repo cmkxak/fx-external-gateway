@@ -24,8 +24,10 @@ import java.util.Optional;
 import java.util.function.Predicate;
 
 import static com.hectofinancial.fxgateway.provider.thunes.client.ThunesUri.CONFIRM_TRANSACTION;
+import static com.hectofinancial.fxgateway.provider.thunes.client.ThunesUri.CONFIRM_TRANSACTION_BY_EXT;
 import static com.hectofinancial.fxgateway.provider.thunes.client.ThunesUri.CREATE_QUOTATION;
 import static com.hectofinancial.fxgateway.provider.thunes.client.ThunesUri.CREATE_TRANSACTION;
+import static com.hectofinancial.fxgateway.provider.thunes.client.ThunesUri.CREATE_TRANSACTION_BY_EXT_QUOTATION;
 import static com.hectofinancial.fxgateway.provider.thunes.client.ThunesUri.CREDIT_PARTY_INFORMATION;
 import static com.hectofinancial.fxgateway.provider.thunes.client.ThunesUri.GET_PAYER_BY_ID;
 import static com.hectofinancial.fxgateway.provider.thunes.client.ThunesUri.GET_PAYERS;
@@ -148,12 +150,31 @@ public class ThunesClient {
                 .body(TransactionResponse.class);
     }
 
+    /** 거래 생성 (견적 external_id = 우리 번호 기준). 멱등/복구용. */
+    public TransactionResponse createTransactionByQuotationExternalId(String quotationExternalId, TransactionRequest req) {
+        return rc.post()
+                .uri(CREATE_TRANSACTION_BY_EXT_QUOTATION.path(), quotationExternalId)
+                .body(req)
+                .retrieve()
+                .onStatus(IS_ERROR, this::raiseThunesError)
+                .body(TransactionResponse.class);
+    }
+
     /**
      * 거래 확정 — 실제 자금 이동 트리거 (바디 없음).
      */
     public TransactionResponse confirmTransaction(long transactionId) {
         return rc.post()
                 .uri(CONFIRM_TRANSACTION.path(), transactionId)
+                .retrieve()
+                .onStatus(IS_ERROR, this::raiseThunesError)
+                .body(TransactionResponse.class);
+    }
+
+    /** 거래 확정 (external_id = 우리 번호 기준). 멱등/복구용. */
+    public TransactionResponse confirmTransactionByExternalId(String transactionExternalId) {
+        return rc.post()
+                .uri(CONFIRM_TRANSACTION_BY_EXT.path(), transactionExternalId)
                 .retrieve()
                 .onStatus(IS_ERROR, this::raiseThunesError)
                 .body(TransactionResponse.class);

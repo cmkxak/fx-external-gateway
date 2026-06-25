@@ -83,9 +83,24 @@ public class ThunesRemittanceController {
         return ResponseEntity.status(HttpStatus.CREATED).body(provider.createTransaction(quotationId, req));
     }
 
+    /** ④' 거래 생성 (견적 external_id = 우리 번호 기준) */
+    @PostMapping("/quotations/ext-{quotationExternalId}/transactions")
+    public ResponseEntity<TransactionResponse> createTransactionByQuotationExternalId(
+            @PathVariable String quotationExternalId,
+            @Valid @RequestBody TransactionRequest req) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(provider.createTransactionByQuotationExternalId(quotationExternalId, req));
+    }
+
     /** [선택] 거래 확정 — 자금 이동 트리거 */
     @PostMapping("/transactions/{transactionId}/confirm")
     public ResponseEntity<TransactionResponse> confirmTransaction(@PathVariable long transactionId) {
         return ResponseEntity.ok(provider.confirmTransaction(transactionId));
+    }
+
+    /** [선택] 거래 확정 (external_id = 우리 번호 기준) */
+    @PostMapping("/transactions/ext-{transactionExternalId}/confirm")
+    public ResponseEntity<TransactionResponse> confirmTransactionByExternalId(@PathVariable String transactionExternalId) {
+        return ResponseEntity.ok(provider.confirmTransactionByExternalId(transactionExternalId));
     }
 }
