@@ -41,6 +41,11 @@ public class ThunesRemittanceController {
         this.provider = provider;
     }
 
+    @GetMapping("/ping")
+    public ResponseEntity<String> checkPing() {
+        return ResponseEntity.ok(provider.ping());
+    }
+
     /** Discovery: 지급처 목록 (견적 전 payer_id 확보용). */
     @GetMapping("/payers")
     public ResponseEntity<List<Payer>> listPayers(

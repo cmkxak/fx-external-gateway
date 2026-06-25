@@ -35,8 +35,8 @@ public class ThunesRemittanceProvider implements RemittanceProvider {
     }
 
     @Override
-    public String network() {
-        return NETWORK;
+    public String ping() {
+        return thunes.ping();
     }
 
     /** 지급처 목록 조회 (Discovery). 견적 전 payer_id 확보용. */

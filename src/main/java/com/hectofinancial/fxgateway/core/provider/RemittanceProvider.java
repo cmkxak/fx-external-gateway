@@ -10,5 +10,5 @@ package com.hectofinancial.fxgateway.core.provider;
 public interface RemittanceProvider {
 
     /** 망 식별자. 예: "THUNES" */
-    String network();
+    String ping();
 }

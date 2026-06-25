@@ -3,6 +3,8 @@ package com.hectofinancial.fxgateway.provider.thunes.web;
 import com.hectofinancial.fxgateway.provider.thunes.client.ThunesApiException;
 import com.hectofinancial.fxgateway.provider.thunes.client.ThunesErrors;
 import com.hectofinancial.fxgateway.provider.thunes.dto.error.GatewayErrorResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -17,9 +19,12 @@ import org.springframework.web.client.ResourceAccessException;
 @RestControllerAdvice
 public class ThunesExceptionHandler {
 
+    private static final Logger log = LoggerFactory.getLogger(ThunesExceptionHandler.class);
+
     /** 타임아웃/IO = 결과 불확실. */
     @ExceptionHandler(ResourceAccessException.class)
     public ResponseEntity<GatewayErrorResponse> onUncertain(ResourceAccessException e) {
+        log.warn("[Thunes] uncertain (timeout/IO): {}", e.getMessage(), e);
         return ResponseEntity.status(HttpStatus.GATEWAY_TIMEOUT)
                 .body(new GatewayErrorResponse("UNKNOWN", null,
                         "Thunes 응답 불확실(타임아웃/IO) — GET 조회로 reconcile 필요"));
