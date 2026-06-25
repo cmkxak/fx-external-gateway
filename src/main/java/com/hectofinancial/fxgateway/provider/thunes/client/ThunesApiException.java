@@ -1,7 +1,7 @@
 package com.hectofinancial.fxgateway.provider.thunes.client;
 
-import com.hectofinancial.fxgateway.provider.thunes.dto.ThunesError;
-import com.hectofinancial.fxgateway.provider.thunes.dto.ThunesErrorResponse;
+import com.hectofinancial.fxgateway.provider.thunes.dto.error.ThunesError;
+import com.hectofinancial.fxgateway.provider.thunes.dto.error.ThunesErrorResponse;
 
 import java.util.List;
 

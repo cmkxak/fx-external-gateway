@@ -1,9 +1,5 @@
 package com.hectofinancial.fxgateway.provider.thunes.client;
 
-/**
- * Thunes MoneyTransfer V2 엔드포인트 경로 상수.
- * 경로 내 {placeholder} 는 RestClient.uri(path, args...) 의 URI 변수로 치환된다.
- */
 public enum ThunesUri {
 
     PING("/ping"),

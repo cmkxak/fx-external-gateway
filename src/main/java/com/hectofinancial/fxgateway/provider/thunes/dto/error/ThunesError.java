@@ -1,4 +1,4 @@
-package com.hectofinancial.fxgateway.provider.thunes.dto;
+package com.hectofinancial.fxgateway.provider.thunes.dto.error;
 
 // Thunes 에러 항목: { "code": "...", "message": "..." }
 public record ThunesError(String code, String message) {}

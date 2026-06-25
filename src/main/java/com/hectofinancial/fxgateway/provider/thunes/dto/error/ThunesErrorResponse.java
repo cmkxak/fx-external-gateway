@@ -1,4 +1,4 @@
-package com.hectofinancial.fxgateway.provider.thunes.dto;
+package com.hectofinancial.fxgateway.provider.thunes.dto.error;
 
 import java.util.List;
 

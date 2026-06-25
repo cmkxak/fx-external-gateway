@@ -1,15 +1,15 @@
 package com.hectofinancial.fxgateway.provider.thunes.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hectofinancial.fxgateway.provider.thunes.dto.CpiRequest;
-import com.hectofinancial.fxgateway.provider.thunes.dto.CpiResponse;
-import com.hectofinancial.fxgateway.provider.thunes.dto.Payer;
-import com.hectofinancial.fxgateway.provider.thunes.dto.QuotationRequest;
-import com.hectofinancial.fxgateway.provider.thunes.dto.QuotationResponse;
-import com.hectofinancial.fxgateway.provider.thunes.dto.ThunesErrorResponse;
-import com.hectofinancial.fxgateway.provider.thunes.dto.TransactionRequest;
-import com.hectofinancial.fxgateway.provider.thunes.dto.TransactionResponse;
-import com.hectofinancial.fxgateway.provider.thunes.dto.VerificationRequest;
+import com.hectofinancial.fxgateway.provider.thunes.dto.creditparty.CpiRequest;
+import com.hectofinancial.fxgateway.provider.thunes.dto.creditparty.CpiResponse;
+import com.hectofinancial.fxgateway.provider.thunes.dto.payer.Payer;
+import com.hectofinancial.fxgateway.provider.thunes.dto.quotation.QuotationRequest;
+import com.hectofinancial.fxgateway.provider.thunes.dto.quotation.QuotationResponse;
+import com.hectofinancial.fxgateway.provider.thunes.dto.error.ThunesErrorResponse;
+import com.hectofinancial.fxgateway.provider.thunes.dto.transaction.TransactionRequest;
+import com.hectofinancial.fxgateway.provider.thunes.dto.transaction.TransactionResponse;
+import com.hectofinancial.fxgateway.provider.thunes.dto.creditparty.VerificationRequest;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatusCode;

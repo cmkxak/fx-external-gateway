@@ -1,4 +1,5 @@
-package com.hectofinancial.fxgateway.provider.thunes.dto;
+package com.hectofinancial.fxgateway.provider.thunes.dto.creditparty;
+import com.hectofinancial.fxgateway.provider.thunes.dto.common.Beneficiary;
 
 import java.util.Map;
 

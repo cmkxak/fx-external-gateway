@@ -1,4 +1,4 @@
-package com.hectofinancial.fxgateway.provider.thunes.dto;
+package com.hectofinancial.fxgateway.provider.thunes.dto.common;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

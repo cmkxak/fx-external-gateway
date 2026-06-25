@@ -1,4 +1,5 @@
-package com.hectofinancial.fxgateway.provider.thunes.dto;
+package com.hectofinancial.fxgateway.provider.thunes.dto.payer;
+import com.hectofinancial.fxgateway.provider.thunes.dto.common.Service;
 
 import java.math.BigDecimal;
 import java.util.Map;
