@@ -3,7 +3,7 @@
 Thunes Money Transfer V2 API 뜯어보기
 
 ## OverView
-- Thunes 송금 흐름(견적 → 거래 → 확정 → 콜백)을 스켈레톤 코드 구현
+- Thunes 송금 흐름(견적 → 거래 → 확정 → 콜백) 스켈레톤 코드 구현
 - 해외송금 네트워크를 여러 개 붙일 수 있게 provider 단위로 분리
 - Spring Boot 3.5.x / JDK 21 / `RestClient` 같은 최신 스택 적용
 
