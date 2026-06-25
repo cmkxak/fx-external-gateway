@@ -6,11 +6,13 @@ import com.hectofinancial.fxgateway.provider.thunes.dto.creditparty.CpiResponse;
 import com.hectofinancial.fxgateway.provider.thunes.dto.payer.Payer;
 import com.hectofinancial.fxgateway.provider.thunes.dto.quotation.QuotationRequest;
 import com.hectofinancial.fxgateway.provider.thunes.dto.quotation.QuotationResponse;
+import com.hectofinancial.fxgateway.provider.thunes.dto.transaction.TransactionAttachment;
 import com.hectofinancial.fxgateway.provider.thunes.dto.transaction.TransactionRequest;
 import com.hectofinancial.fxgateway.provider.thunes.dto.transaction.TransactionResponse;
 import com.hectofinancial.fxgateway.provider.thunes.dto.creditparty.VerificationRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,7 +20,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -102,5 +106,32 @@ public class ThunesRemittanceController {
     @PostMapping("/transactions/ext-{transactionExternalId}/confirm")
     public ResponseEntity<TransactionResponse> confirmTransactionByExternalId(@PathVariable String transactionExternalId) {
         return ResponseEntity.ok(provider.confirmTransactionByExternalId(transactionExternalId));
+    }
+
+    /** 거래 취소 (id 기준). CREATED / CONFIRMED-WAITING-FOR-PICKUP 만 가능 */
+    @PostMapping("/transactions/{transactionId}/cancel")
+    public ResponseEntity<TransactionResponse> cancelTransaction(@PathVariable long transactionId) {
+        return ResponseEntity.ok(provider.cancelTransaction(transactionId));
+    }
+
+    /** 거래 취소 (external_id = 우리 번호 기준) */
+    @PostMapping("/transactions/ext-{transactionExternalId}/cancel")
+    public ResponseEntity<TransactionResponse> cancelTransactionByExternalId(@PathVariable String transactionExternalId) {
+        return ResponseEntity.ok(provider.cancelTransactionByExternalId(transactionExternalId));
+    }
+
+    /** 증빙 첨부 추가 (multipart). type 예: invoice|purchase_order|contract */
+    @PostMapping(value = "/transactions/{transactionId}/attachments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<TransactionAttachment> addAttachment(@PathVariable long transactionId,
+                                                               @RequestParam String name,
+                                                               @RequestParam String type,
+                                                               @RequestPart("file") MultipartFile file) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(provider.addAttachment(transactionId, name, type, file));
+    }
+
+    /** 증빙 첨부 목록 조회 */
+    @GetMapping("/transactions/{transactionId}/attachments")
+    public ResponseEntity<List<TransactionAttachment>> listAttachments(@PathVariable long transactionId) {
+        return ResponseEntity.ok(provider.listAttachments(transactionId));
     }
 }

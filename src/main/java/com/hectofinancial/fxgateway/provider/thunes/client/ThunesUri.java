@@ -14,7 +14,10 @@ public enum ThunesUri {
     CONFIRM_TRANSACTION("/v2/money-transfer/transactions/{transactionId}/confirm"),
     CONFIRM_TRANSACTION_BY_EXT("/v2/money-transfer/transactions/ext-{externalId}/confirm"),
     GET_TRANSACTION("/v2/money-transfer/transactions/{transactionId}"),
-    GET_TRANSACTION_BY_EXTERNAL_ID("/v2/money-transfer/transactions/ext-{externalId}");
+    GET_TRANSACTION_BY_EXTERNAL_ID("/v2/money-transfer/transactions/ext-{externalId}"),
+    CANCEL_TRANSACTION("/v2/money-transfer/transactions/{transactionId}/cancel"),
+    CANCEL_TRANSACTION_BY_EXT("/v2/money-transfer/transactions/ext-{externalId}/cancel"),
+    TRANSACTION_ATTACHMENTS("/v2/money-transfer/transactions/{transactionId}/attachments");
 
     private final String path;
 

@@ -7,10 +7,12 @@ import com.hectofinancial.fxgateway.provider.thunes.dto.creditparty.CpiResponse;
 import com.hectofinancial.fxgateway.provider.thunes.dto.payer.Payer;
 import com.hectofinancial.fxgateway.provider.thunes.dto.quotation.QuotationRequest;
 import com.hectofinancial.fxgateway.provider.thunes.dto.quotation.QuotationResponse;
+import com.hectofinancial.fxgateway.provider.thunes.dto.transaction.TransactionAttachment;
 import com.hectofinancial.fxgateway.provider.thunes.dto.transaction.TransactionRequest;
 import com.hectofinancial.fxgateway.provider.thunes.dto.transaction.TransactionResponse;
 import com.hectofinancial.fxgateway.provider.thunes.dto.creditparty.VerificationRequest;
 import org.springframework.stereotype.Component;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -85,5 +87,25 @@ public class ThunesRemittanceProvider implements RemittanceProvider {
     /** 거래 확정 (external_id 기준 = 우리 번호). 멱등/복구용. */
     public TransactionResponse confirmTransactionByExternalId(String transactionExternalId) {
         return thunes.confirmTransactionByExternalId(transactionExternalId);
+    }
+
+    /** 거래 취소 (id 기준). CREATED / CONFIRMED-WAITING-FOR-PICKUP 만 가능. */
+    public TransactionResponse cancelTransaction(long transactionId) {
+        return thunes.cancelTransaction(transactionId);
+    }
+
+    /** 거래 취소 (external_id 기준 = 우리 번호). */
+    public TransactionResponse cancelTransactionByExternalId(String transactionExternalId) {
+        return thunes.cancelTransactionByExternalId(transactionExternalId);
+    }
+
+    /** 증빙 첨부 추가. 확정 전, 거래당 최대 3개·8MB. */
+    public TransactionAttachment addAttachment(long transactionId, String name, String type, MultipartFile file) {
+        return thunes.addAttachment(transactionId, name, type, file);
+    }
+
+    /** 증빙 첨부 목록 조회. */
+    public List<TransactionAttachment> listAttachments(long transactionId) {
+        return thunes.listAttachments(transactionId);
     }
 }
