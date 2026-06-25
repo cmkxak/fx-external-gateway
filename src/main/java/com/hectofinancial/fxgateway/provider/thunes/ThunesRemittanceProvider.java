@@ -4,28 +4,24 @@ import com.hectofinancial.fxgateway.core.provider.RemittanceProvider;
 import com.hectofinancial.fxgateway.provider.thunes.client.ThunesClient;
 import com.hectofinancial.fxgateway.provider.thunes.dto.creditparty.CpiRequest;
 import com.hectofinancial.fxgateway.provider.thunes.dto.creditparty.CpiResponse;
+import com.hectofinancial.fxgateway.provider.thunes.dto.creditparty.VerificationRequest;
 import com.hectofinancial.fxgateway.provider.thunes.dto.payer.Payer;
 import com.hectofinancial.fxgateway.provider.thunes.dto.quotation.QuotationRequest;
 import com.hectofinancial.fxgateway.provider.thunes.dto.quotation.QuotationResponse;
 import com.hectofinancial.fxgateway.provider.thunes.dto.transaction.TransactionAttachment;
 import com.hectofinancial.fxgateway.provider.thunes.dto.transaction.TransactionRequest;
 import com.hectofinancial.fxgateway.provider.thunes.dto.transaction.TransactionResponse;
-import com.hectofinancial.fxgateway.provider.thunes.dto.creditparty.VerificationRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
 /**
- * Thunes 망 구현체.
+ * Thunes 망 구현체 (무상태 패스스루 + Thunes 방언↔공용어 번역).
  *
- * 송금 시퀀스의 단계를 한 덩어리로 묶지 않고 개별 연산으로 노출한다.
- * 단계 사이의 고객 한도 누적액 검증 등은 GW 가 아닌 상위(API 서버)가 제어하므로,
- * 실제 호출 순서는 호출자가 조립한다:
- *   1) createQuotation  (견적 생성)
- *   2) [API 서버] 고객 한도 누적액 검증
- *   3) verifyBeneficiary (수취인 검증)
- *   4) createTransaction (거래 생성)  → [선택] confirmTransaction (확정 = 자금 이동)
+ * GW 책임: 멱등 실행 + 상태/에러 해석 + 조회 제공.
+ * 재시도/망취소 결정·지속(원장 기반)은 GW가 아닌 상위(API 서버) 책임 — 여기서 in-call 재시도 안 함.
+ * 불확실(타임아웃/IO/5xx) 응답은 ThunesExceptionHandler 가 전용 신호로 표면화 → API 서버가 GET 조회로 reconcile.
  */
 @Component
 public class ThunesRemittanceProvider implements RemittanceProvider {
@@ -69,27 +65,37 @@ public class ThunesRemittanceProvider implements RemittanceProvider {
         return thunes.retrieveCreditPartyInformation(payerId, type, req);
     }
 
-    /** 거래 생성 (견적 ID 기준). 확정 전까지는 미확정 상태. */
+    /** 거래 생성 (견적 ID 기준). */
     public TransactionResponse createTransaction(long quotationId, TransactionRequest req) {
         return thunes.createTransaction(quotationId, req);
     }
 
-    /** 거래 생성 (견적 external_id 기준 = 우리 번호). 응답 유실 시 재시도/복구에 사용. */
+    /** 거래 생성 (견적 external_id 기준 = 우리 번호). 멱등 안전망. */
     public TransactionResponse createTransactionByQuotationExternalId(String quotationExternalId, TransactionRequest req) {
         return thunes.createTransactionByQuotationExternalId(quotationExternalId, req);
     }
 
-    /** [선택] 거래 확정 — 이 호출부터 실제 자금 이동. 최종 상태는 콜백/조회로 확인. */
+    /** [선택] 거래 확정 — 이 호출부터 실제 자금 이동. */
     public TransactionResponse confirmTransaction(long transactionId) {
         return thunes.confirmTransaction(transactionId);
     }
 
-    /** 거래 확정 (external_id 기준 = 우리 번호). 멱등/복구용. */
+    /** 거래 확정 (external_id 기준 = 우리 번호). 멱등 안전망. */
     public TransactionResponse confirmTransactionByExternalId(String transactionExternalId) {
         return thunes.confirmTransactionByExternalId(transactionExternalId);
     }
 
-    /** 거래 취소 (id 기준). CREATED / CONFIRMED-WAITING-FOR-PICKUP 만 가능. */
+    /** 거래 조회 (id 기준). API 서버 reconcile/상태판단용. */
+    public TransactionResponse getTransaction(long transactionId) {
+        return thunes.getTransaction(transactionId);
+    }
+
+    /** 거래 조회 (external_id 기준 = 우리 번호). API 서버 reconcile/상태판단용. */
+    public TransactionResponse getTransactionByExternalId(String transactionExternalId) {
+        return thunes.getTransactionByExternalId(transactionExternalId);
+    }
+
+    /** 거래 취소 (id 기준). CREATED / CONFIRMED-WAITING-FOR-PICKUP 만 가능 (상태판정은 Thunes 위임). */
     public TransactionResponse cancelTransaction(long transactionId) {
         return thunes.cancelTransaction(transactionId);
     }

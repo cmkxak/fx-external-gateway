@@ -193,6 +193,7 @@ public class ThunesClient {
         return restClient.get()
                 .uri(GET_TRANSACTION.path(), transactionId)
                 .retrieve()
+                .onStatus(IS_ERROR, this::throwThunesApiException)
                 .body(TransactionResponse.class);
     }
 
@@ -203,6 +204,7 @@ public class ThunesClient {
         return restClient.get()
                 .uri(GET_TRANSACTION_BY_EXTERNAL_ID.path(), externalId)
                 .retrieve()
+                .onStatus(IS_ERROR, this::throwThunesApiException)
                 .body(TransactionResponse.class);
     }
 

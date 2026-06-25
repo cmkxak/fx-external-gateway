@@ -108,6 +108,18 @@ public class ThunesRemittanceController {
         return ResponseEntity.ok(provider.confirmTransactionByExternalId(transactionExternalId));
     }
 
+    /** 거래 조회 (id 기준). API 서버 reconcile/상태판단용 */
+    @GetMapping("/transactions/{transactionId}")
+    public ResponseEntity<TransactionResponse> getTransaction(@PathVariable long transactionId) {
+        return ResponseEntity.ok(provider.getTransaction(transactionId));
+    }
+
+    /** 거래 조회 (external_id = 우리 번호 기준) */
+    @GetMapping("/transactions/ext-{transactionExternalId}")
+    public ResponseEntity<TransactionResponse> getTransactionByExternalId(@PathVariable String transactionExternalId) {
+        return ResponseEntity.ok(provider.getTransactionByExternalId(transactionExternalId));
+    }
+
     /** 거래 취소 (id 기준). CREATED / CONFIRMED-WAITING-FOR-PICKUP 만 가능 */
     @PostMapping("/transactions/{transactionId}/cancel")
     public ResponseEntity<TransactionResponse> cancelTransaction(@PathVariable long transactionId) {
