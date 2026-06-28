@@ -15,8 +15,6 @@ public record Payer(
         BigDecimal increment,                        // 금액 최소 증분 단위 (이 배수로만 금액 지정 가능)
         String currency,                             // 지급 통화 (ISO 4217)
         String countryIsoCode,                       // 지급 국가 (ISO 3166-1 alpha-3)
-        BigDecimal minimumTransactionAmount,         // 최소 거래 금액
-        BigDecimal maximumTransactionAmount,         // 최대 거래 금액 (null = 무제한)
         Service service,                             // 지급 수단(서비스): MobileWallet / BankAccount 등
         Map<String, PayerTransactionType> transactionTypes  // 거래유형(C2C/C2B/B2C/B2B)별 요구사항
 ) {}

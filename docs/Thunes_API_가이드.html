@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thunes Money Transfer V2 API 가이드</title>
+<link rel="stylesheet" href="design.css">
+</head>
+<body>
+<div class="wrap">
+
+  <nav class="toc">
+    <div class="brand"><b>Thunes</b> MT V2</div>
+    <div class="sub">Money Transfer API 가이드</div>
+    <a href="#overview">1. 개요</a>
+    <a href="#headers">· 공통 헤더 (Headers)</a>
+    <a href="#auth">2. 인증</a>
+    <a href="#flow">3. 송금 플로우</a>
+    <a href="#funds">4. 자금 흐름 (Prefunding)</a>
+    <a href="#endpoints">5. 엔드포인트</a>
+    <a href="#status">6. 거래 상태</a>
+    <a href="#errors">7. 에러 코드</a>
+    <a href="#enums">8. 주요 Enum</a>
+    <a href="#fields-common">9. 공통 객체 필드</a>
+    <a href="#fields-endpoints">10. 요청·응답 파라미터</a>
+  </nav>
+
+  <main>
+    <header class="hero">
+      <h1>Thunes Money Transfer V2 API 가이드</h1>
+      <p>해외송금(소액해외송금) 연동을 위한 Thunes Direct Global Network REST API 정리</p>
+      <span class="pill">출처 docs.thunes.com/money-transfer/v2 · 한글 정리</span>
+    </header>
+
+    <section id="overview">
+      <h2>1. 개요</h2>
+      <p>Thunes는 전 세계 지급 생태계(모바일월렛·은행계좌·카드·현금수령)로 송금을 중계하는 글로벌 네트워크다. 우리는 이 <b>REST/JSON API</b>를 연동해 소액 해외송금을 처리한다.</p>
+      <ul>
+        <li><b>환경</b>: Production / Pre-production (IPSec VPN 또는 HTTPS TLS 1.2+)</li>
+        <li><b>버전</b>: v2는 v1과 완전 분리. <b>non-breaking 변경(신규 엔드포인트·선택필드·신규 상태)은 무공지 추가</b> → 클라이언트는 유연하게(미지 값 허용) 구현</li>
+        <li><b>거래 유형</b>: <code>C2C</code>(개인→개인) · <code>C2B</code>(개인→사업자) · <code>B2C</code>(사업자→개인) · <code>B2B</code>(사업자→사업자)</li>
+      </ul>
+      <div class="note">우리 소액해외송금은 <b>C2C 기준</b>으로 구현한다 (송금인 <code>sender</code> + 수취인 <code>beneficiary</code>, business 객체 미사용).</div>
+    </section>
+
+    <section id="headers">
+      <h2>공통 헤더 (Headers)</h2>
+      <p>API 요청·응답의 <b>모든 헤더 필드는 대소문자를 구분하지 않는다</b>(HTTP/1.1 <a href="https://datatracker.ietf.org/doc/html/rfc7230#section-3.2" target="_blank">RFC 7230</a>). 따라서 헤더 이름의 대소문자에 <b>의존하지 말 것</b>. 응답에는 페이지네이션 정보 등 다양한 헤더가 함께 실린다.</p>
+
+      <h3>페이지네이션 응답 헤더</h3>
+      <table class="p"><thead><tr><th>헤더</th><th>의미</th></tr></thead><tbody>
+        <tr><td class="f">X-Total</td><td>전체 레코드 수</td></tr>
+        <tr><td class="f">X-Total-Pages</td><td>전체 페이지 수</td></tr>
+        <tr><td class="f">X-Per-Page</td><td>페이지당 레코드 수</td></tr>
+        <tr><td class="f">X-Page</td><td>현재 페이지 번호</td></tr>
+        <tr><td class="f">X-Next-Page</td><td>다음 페이지 번호 (있을 때)</td></tr>
+        <tr><td class="f">X-Prev-Page</td><td>이전 페이지 번호 (있을 때)</td></tr>
+      </tbody></table>
+
+      <h3>커서 페이지네이션 (Balance Movements)</h3>
+      <table class="p"><thead><tr><th>헤더</th><th>의미</th></tr></thead><tbody>
+        <tr><td class="f">X-Next-Url</td><td>다음 페이지 조회 URL</td></tr>
+        <tr><td class="f">X-Next-Cursor</td><td>base64 인코딩된 커서</td></tr>
+      </tbody></table>
+
+      <h3>기타 헤더</h3>
+      <table class="p"><thead><tr><th>헤더</th><th>방향</th><th>의미</th></tr></thead><tbody>
+        <tr><td class="f">x-simulated-transaction</td><td>요청/응답</td><td>시뮬레이션 거래 표시(<code>true</code>) — Pre-production 전용. 응답 헤더로 시뮬레이션 여부 확인 가능</td></tr>
+      </tbody></table>
+
+      <div class="note">우리 구현은 헤더를 <b>대소문자 무시</b>로 다뤄야 한다(Spring/HTTP 클라이언트는 기본적으로 case-insensitive). 페이지네이션은 응답 <b>헤더</b>로 내려오므로, 목록 조회(payers·balances 등) 시 바디뿐 아니라 헤더(X-Total 등)도 함께 읽어야 한다.</div>
+    </section>
+
+    <section id="auth">
+      <h2>2. 인증</h2>
+      <p><b>HTTP Basic Authentication</b> — Username = <code>api_key</code>, Password = <code>api_secret</code>.</p>
+      <pre><code>curl https://${API_ENDPOINT}/ping -u "${API_KEY}:${API_SECRET}"</code></pre>
+      <ul>
+        <li>자격증명 = 신원·인가 그 자체. <b>소스코드/VCS 커밋 금지</b>, 환경변수·Vault·VCS 제외 설정파일로 주입</li>
+        <li>콜백용 키는 송금 API 키와 <b>별도 발급</b></li>
+      </ul>
+    </section>
+
+    <section id="flow">
+      <h2>3. 송금 플로우 (5단계)</h2>
+      <p>견적으로 환율·수수료를 <b>고정(lock)</b>하고, 거래 생성 → 확정으로 실제 자금을 움직인다. 확정 후 상태는 콜백/폴링으로 추적한다.</p>
+      <div class="flow">
+        <span class="step">① 견적 Quotation</span><span class="arr">→</span>
+        <span class="step">② (선택) 수취인 검증 CPV</span><span class="arr">→</span>
+        <span class="step">③ 거래 생성 Transaction</span><span class="arr">→</span>
+        <span class="step">④ 확정 Confirm</span><span class="arr">→</span>
+        <span class="step">⑤ 상태 Callback/Polling</span>
+      </div>
+      <table>
+        <thead><tr><th>단계</th><th>엔드포인트</th><th>설명</th></tr></thead>
+        <tbody>
+          <tr><td>지급처 조회</td><td class="path">GET /payers</td><td>코리도/필수필드/통화규칙 확보 → <code>payer_id</code></td></tr>
+          <tr><td>① 견적</td><td class="path">POST /quotations</td><td>환율·수수료 lock, <code>expiration_date</code> 부여</td></tr>
+          <tr><td>② 수취인 검증</td><td class="path">POST …/credit-party-verification</td><td>(선택) 계좌상태/이름 검증 → 거절 예방</td></tr>
+          <tr><td>③ 거래 생성</td><td class="path">POST /quotations/{id}/transactions</td><td>sender/beneficiary/purpose 전달 → 상태 CREATED</td></tr>
+          <tr><td>④ 확정</td><td class="path">POST /transactions/{id}/confirm</td><td>source 금액 hold → 망 디스패치 (자금 이동)</td></tr>
+          <tr><td>⑤ 상태</td><td class="path">GET /transactions/{id}</td><td>콜백(권장) 또는 폴링으로 최종 상태 확인</td></tr>
+        </tbody>
+      </table>
+      <div class="warn"><b>confirm = 송금 완료 아님.</b> hold + 디스패치까지이고, 최종 완료는 비동기(콜백/폴링)로만 확정된다. 컴플라이언스 심사도 confirm 시점에 돈다.</div>
+    </section>
+
+    <section id="funds">
+      <h2>4. 자금 흐름 (Prefunding 모델)</h2>
+      <p>Thunes는 <b>선충전(prefunding)</b> 방식이다. 우리가 Thunes 계좌에 미리 충전해두고, 송금 건마다 그 잔액에서 차감된다. 실시간처럼 보이지만 내부적으로는 <b>양쪽 모두 선충전된 잔액 간 정산</b>이다.</p>
+      <div class="flow">
+        <span class="step">우리 → Thunes 충전</span><span class="arr">→</span>
+        <span class="step">Thunes 내부 (Safeguarding)</span><span class="arr">→</span>
+        <span class="step">Thunes → Payout 파트너 충전</span><span class="arr">→</span>
+        <span class="step">수취인 지급</span>
+      </div>
+      <ul>
+        <li>충전 통화: <code>USD</code> <code>USDC</code> <code>EUR</code> <code>GBP</code> <code>SGD</code> <code>AUD</code> <code>HKD</code> <code>IDR</code></li>
+        <li>잔액 회계: <code>available = balance − pending + credit_facility</code> (confirm=hold→pending, 완료=차감, 실패=반환)</li>
+        <li>잔액 소진 = <code>1007005</code>(insufficient balance) = 서비스 중단 → <b>통화별 잔액 모니터링 필수</b></li>
+      </ul>
+      <div class="note">파트너별 계좌가 아니라 <b>Thunes 단위 풀 계좌</b>에서 지급. 가맹점 구분은 <b>잔액 원장</b>으로만. (추정 — 계약/문서 확인 권장)</div>
+    </section>
+
+    <section id="endpoints">
+      <h2>5. 엔드포인트</h2>
+
+      <h3>Connectivity / Discovery / Account</h3>
+      <table><thead><tr><th>Method</th><th>Path</th><th>설명</th></tr></thead><tbody>
+        <tr><td><span class="m GET">GET</span></td><td class="path">/ping</td><td>연결 확인 → <code>{"status":"up"}</code></td></tr>
+        <tr><td><span class="m GET">GET</span></td><td class="path">/v2/money-transfer/services</td><td>서비스(코리도) 목록</td></tr>
+        <tr><td><span class="m GET">GET</span></td><td class="path">/v2/money-transfer/payers</td><td>지급처 목록 (filter: country_iso_code, currency, service_id)</td></tr>
+        <tr><td><span class="m GET">GET</span></td><td class="path">/v2/money-transfer/payers/{id}</td><td>지급처 단건 (transaction_types·required·precision·increment)</td></tr>
+        <tr><td><span class="m GET">GET</span></td><td class="path">/v2/money-transfer/balances</td><td>통화별 잔액</td></tr>
+      </tbody></table>
+
+      <h3>Credit Parties (수취인 검증/조회)</h3>
+      <table><thead><tr><th>Method</th><th>Path</th><th>설명</th></tr></thead><tbody>
+        <tr><td><span class="m POST">POST</span></td><td class="path">/payers/{id}/{type}/credit-party-verification</td><td>CPV — 계좌 상태(AVAILABLE/BARRED) + 이름매칭</td></tr>
+        <tr><td><span class="m POST">POST</span></td><td class="path">/payers/{id}/{type}/credit-party-information</td><td>CPI — 수취인 상세 역조회</td></tr>
+      </tbody></table>
+
+      <h3>Transfers (견적·거래·확정·조회)</h3>
+      <table><thead><tr><th>Method</th><th>Path</th><th>설명</th></tr></thead><tbody>
+        <tr><td><span class="m POST">POST</span></td><td class="path">/quotations</td><td>견적 생성 (mode: SOURCE_AMOUNT / DESTINATION_AMOUNT)</td></tr>
+        <tr><td><span class="m GET">GET</span></td><td class="path">/quotations/{id} · /quotations/ext-{external_id}</td><td>견적 조회</td></tr>
+        <tr><td><span class="m POST">POST</span></td><td class="path">/quotations/{id}/transactions</td><td>거래 생성 (ext- 변형 존재)</td></tr>
+        <tr><td><span class="m POST">POST</span></td><td class="path">/transactions/{id}/confirm</td><td>거래 확정 (ext- 변형 존재)</td></tr>
+        <tr><td><span class="m GET">GET</span></td><td class="path">/transactions/{id} · /transactions/ext-{external_id}</td><td>거래 상태 조회</td></tr>
+        <tr><td><span class="m POST">POST</span></td><td class="path">/transactions/{id}/cancel</td><td>취소 — CREATED / CONFIRMED-WAITING-FOR-PICKUP 만</td></tr>
+      </tbody></table>
+
+      <h3>Attachments (증빙 문서) · Simulation</h3>
+      <table><thead><tr><th>Method</th><th>Path</th><th>설명</th></tr></thead><tbody>
+        <tr><td><span class="m POST">POST</span></td><td class="path">/transactions/{id}/attachments</td><td>증빙 첨부 (multipart, 최대 3개·8MB, 확정 전, type: invoice/purchase_order/contract)</td></tr>
+        <tr><td><span class="m GET">GET</span></td><td class="path">/transactions/{id}/attachments</td><td>첨부 목록</td></tr>
+        <tr><td><span class="m GET">GET</span></td><td class="path">/v2/simulation/transactions/{id}/{status}</td><td>(Pre-prod 전용) 상태 강제 전이</td></tr>
+      </tbody></table>
+
+      <h3>견적 요청 예시 (C2C, SOURCE_AMOUNT)</h3>
+      <pre><code>{
+  "external_id": "9481184321482",
+  "payer_id": "214",
+  "mode": "SOURCE_AMOUNT",
+  "transaction_type": "C2C",
+  "source":      { "amount": "10", "currency": "SGD", "country_iso_code": "SGP" },
+  "destination": { "amount": null, "currency": "IDR" }
+}</code></pre>
+      <div class="note"><b>ID는 64-bit(Long)</b> 사용 필수 (32-bit 초과). 금액은 <b>Decimal</b>, 통화별 <code>precision</code>/<code>increment</code> 규칙 준수.</div>
+    </section>
+
+    <section id="status">
+      <h2>6. 거래 상태</h2>
+      <p>거시 <b>status_class(1~7)</b> + 미시 <b>5자리 code</b>. 신규 코드가 무공지 추가될 수 있으니 <b>class 기준으로 분기</b>하고 미시 코드는 표시/로깅용으로 둔다.</p>
+      <table><thead><tr><th>class</th><th>code</th><th>이름</th></tr></thead><tbody>
+        <tr><td><span class="badge b-blue">1</span></td><td><code>10000</code></td><td>CREATED</td></tr>
+        <tr><td><span class="badge b-blue">2</span></td><td><code>20000</code></td><td>CONFIRMED</td></tr>
+        <tr><td><span class="badge b-blue">2</span></td><td><code>20110</code></td><td>CONFIRMED-UNDER-REVIEW-SLS</td></tr>
+        <tr><td><span class="badge b-red">3</span></td><td><code>30000</code></td><td>REJECTED</td></tr>
+        <tr><td><span class="badge b-red">3</span></td><td><code>30200</code> / <code>30201</code> / <code>30202</code></td><td>REJECTED-INVALID/BARRED-BENEFICIARY/SENDER</td></tr>
+        <tr><td><span class="badge b-red">3</span></td><td><code>30392</code></td><td>REJECTED-COMPLIANCE-REASON</td></tr>
+        <tr><td><span class="badge b-gray">4</span></td><td><code>40000</code></td><td>CANCELLED</td></tr>
+        <tr><td><span class="badge b-purple">5</span></td><td><code>50000</code></td><td>SUBMITTED</td></tr>
+        <tr><td><span class="badge b-orange">6</span></td><td><code>60000</code> / <code>60001/10/20</code></td><td>COMPLETED-WITH-EXCEPTION (+ reversal 계열)</td></tr>
+        <tr><td><span class="badge b-green">7</span></td><td><code>70000</code></td><td>COMPLETED</td></tr>
+        <tr><td><span class="badge b-gray">—</span></td><td><code>80000</code></td><td>EXPIRED</td></tr>
+      </tbody></table>
+      <div class="warn"><code>CONFIRMED-WAITING-FOR-PICKUP</code>(취소 가능 상태)의 5자리 코드는 문서 미기재(20xxx 계열). 시뮬레이션 <code>possible-transitions</code> 또는 Thunes 확인 필요.</div>
+    </section>
+
+    <section id="errors">
+      <h2>7. 에러 코드</h2>
+      <p>HTTP: <code>200</code> OK · <code>400</code> Bad Request · <code>401</code> Unauthorized · <code>404</code> Not Found · <code>500</code> Server Error. 바디는 <code>{ "errors": [ { "code", "message" } ] }</code>.</p>
+      <table><thead><tr><th>code</th><th>의미</th></tr></thead><tbody>
+        <tr><td><code>1000999</code></td><td>Invalid parameter</td></tr>
+        <tr><td><code>1003011</code> / <code>1003012</code></td><td>최소 금액 미만 / 최대 금액 초과</td></tr>
+        <tr><td><code>1003008</code></td><td>Destination amount invalid (precision/increment 위반)</td></tr>
+        <tr><td><code>1006001</code> / <code>1006099</code></td><td>거래 금액 한도 초과 / 한도 초과</td></tr>
+        <tr><td><code>1007001</code></td><td>External ID already used (멱등 — 이미 생성됨)</td></tr>
+        <tr><td><code>1007002</code></td><td>이미 확정됨</td></tr>
+        <tr><td><code>1007004</code></td><td>확정 불가 — 견적 만료</td></tr>
+        <tr><td><code>1007005</code></td><td>확정 불가 — 잔액 부족</td></tr>
+        <tr><td><code>1007014</code></td><td>취소 불가 상태</td></tr>
+        <tr><td><code>1007401~405</code></td><td>첨부 관련 (용량/개수/확정후/미존재/타입)</td></tr>
+        <tr><td><code>1008002</code> / <code>1008004</code></td><td>견적 없음 / 거래 없음</td></tr>
+      </tbody></table>
+    </section>
+
+    <section id="enums">
+      <h2>8. 주요 Enum</h2>
+      <table><thead><tr><th>필드</th><th>값</th></tr></thead><tbody>
+        <tr><td><code>mode</code></td><td>SOURCE_AMOUNT · DESTINATION_AMOUNT</td></tr>
+        <tr><td><code>transaction_type</code></td><td>C2C · C2B · B2C · B2B</td></tr>
+        <tr><td><code>gender</code></td><td>MALE · FEMALE</td></tr>
+        <tr><td><code>id_type</code></td><td>PASSPORT · NATIONAL_ID · DRIVING_LICENSE · SOCIAL_SECURITY · TAX_ID · RESIDENT_CARD · … · OTHER</td></tr>
+        <tr><td><code>purpose_of_remittance</code></td><td>FAMILY_SUPPORT · SALARY · EDUCATION · MEDICAL · … <span class="muted">(전체값 라이브 문서 확인)</span></td></tr>
+        <tr><td><code>account_status</code> (CPV)</td><td>AVAILABLE · BARRED · …</td></tr>
+        <tr><td>attachment <code>type</code></td><td>invoice · purchase_order · contract · …</td></tr>
+      </tbody></table>
+      <div class="warn">"…" 표기 enum 전체값은 요약 기반이라 누락 가능 → 코드 매핑 전 <b>라이브 문서로 verbatim 재확인</b> (추측값 확정 금지).</div>
+    </section>
+
+    <section id="fields-common">
+      <h2>9. 공통 객체 필드</h2>
+      <p>여러 엔드포인트가 공유하는 객체. 영문 필드 + 타입 + 필수(<span class="req">●</span>/<span class="opt">○</span>) + 최대길이 + 한글 의미.</p>
+
+      <h3>credit_party_identifier <span class="muted">— 수취인 식별자 (전부 선택, 채널별 ≥1개)</span></h3>
+      <table class="p"><thead><tr><th>필드</th><th>타입</th><th>필수</th><th>최대</th><th>의미</th></tr></thead><tbody>
+        <tr><td class="f">msisdn</td><td class="ty">String</td><td class="opt">○</td><td>32</td><td>휴대폰 번호(국제형식, 최소 5) — 모바일월렛</td></tr>
+        <tr><td class="f">bank_account_number</td><td class="ty">String</td><td class="opt">○</td><td>30</td><td>은행 계좌번호</td></tr>
+        <tr><td class="f">iban</td><td class="ty">String</td><td class="opt">○</td><td>34</td><td>IBAN 형식 계좌번호(최소 14) — SEPA/유럽</td></tr>
+        <tr><td class="f">clabe</td><td class="ty">String</td><td class="opt">○</td><td>18</td><td>멕시코 CLABE(정확히 18자리 숫자)</td></tr>
+        <tr><td class="f">cbu</td><td class="ty">String</td><td class="opt">○</td><td>22</td><td>아르헨티나 CBU(정확히 22자리 숫자)</td></tr>
+        <tr><td class="f">cbu_alias</td><td class="ty">String</td><td class="opt">○</td><td>20</td><td>CBU 별칭</td></tr>
+        <tr><td class="f">swift_bic_code</td><td class="ty">String</td><td class="opt">○</td><td>11</td><td>SWIFT/BIC 코드(8 또는 11자)</td></tr>
+        <tr><td class="f">bik_code</td><td class="ty">String</td><td class="opt">○</td><td>11</td><td>러시아 BIK(9자리, ru 접두 시 11)</td></tr>
+        <tr><td class="f">ifs_code</td><td class="ty">String</td><td class="opt">○</td><td>11</td><td>인도 IFSC(정확히 11자)</td></tr>
+        <tr><td class="f">sort_code</td><td class="ty">String</td><td class="opt">○</td><td>6</td><td>영국 sort code(정확히 6자리)</td></tr>
+        <tr><td class="f">aba_routing_number</td><td class="ty">String</td><td class="opt">○</td><td>9</td><td>미국 ABA 라우팅(9자리, mod-10)</td></tr>
+        <tr><td class="f">bsb_number</td><td class="ty">String</td><td class="opt">○</td><td>6</td><td>호주 BSB(정확히 6자리)</td></tr>
+        <tr><td class="f">branch_number</td><td class="ty">String</td><td class="opt">○</td><td>12</td><td>지점 번호</td></tr>
+        <tr><td class="f">routing_code</td><td class="ty">String</td><td class="opt">○</td><td>14</td><td>라우팅 코드(최소 4)</td></tr>
+        <tr><td class="f">entity_tt_id</td><td class="ty">String</td><td class="opt">○</td><td>32</td><td>Entity TT ID</td></tr>
+        <tr><td class="f">account_type</td><td class="ty">String</td><td class="opt">○</td><td>-</td><td>계좌유형: CHECKING·SAVINGS·DEPOSIT·OTHERS</td></tr>
+        <tr><td class="f">account_number</td><td class="ty">String</td><td class="opt">○</td><td>128</td><td>계좌번호</td></tr>
+        <tr><td class="f">email</td><td class="ty">String</td><td class="opt">○</td><td>64</td><td>이메일 주소</td></tr>
+        <tr><td class="f">card_number</td><td class="ty">String</td><td class="opt">○</td><td>64</td><td>카드 번호</td></tr>
+        <tr><td class="f">qr_code</td><td class="ty">String</td><td class="opt">○</td><td>512</td><td>QR 코드</td></tr>
+      </tbody></table>
+
+      <h3>sender <span class="muted">— 송금인 (C2C/C2B). firstname·lastname 필수</span></h3>
+      <table class="p"><thead><tr><th>필드</th><th>타입</th><th>필수</th><th>최대</th><th>의미</th></tr></thead><tbody>
+        <tr><td class="f">firstname / lastname</td><td class="ty">String</td><td class="req">●</td><td>-</td><td>이름 / 성</td></tr>
+        <tr><td class="f">lastname2 / middlename / nativename</td><td class="ty">String</td><td class="opt">○</td><td>-</td><td>추가 성 / 중간이름 / 현지문자 전체이름</td></tr>
+        <tr><td class="f">nationality_country_iso_code</td><td class="ty">String</td><td class="opt">○</td><td>3</td><td>국적(alpha-3)</td></tr>
+        <tr><td class="f">date_of_birth</td><td class="ty">Date</td><td class="opt">○</td><td>-</td><td>생년월일(ISO 8601)</td></tr>
+        <tr><td class="f">country_of_birth_iso_code</td><td class="ty">String</td><td class="opt">○</td><td>3</td><td>출생국(alpha-3)</td></tr>
+        <tr><td class="f">gender</td><td class="ty">String</td><td class="opt">○</td><td>-</td><td>성별: MALE·FEMALE</td></tr>
+        <tr><td class="f">address / postal_code / city</td><td class="ty">String</td><td class="opt">○</td><td>-</td><td>주소 / 우편번호 / 도시</td></tr>
+        <tr><td class="f">country_iso_code</td><td class="ty">String</td><td class="opt">○</td><td>3</td><td>주소 국가(alpha-3)</td></tr>
+        <tr><td class="f">province_state</td><td class="ty">String</td><td class="opt">○</td><td>-</td><td>시/도</td></tr>
+        <tr><td class="f">msisdn / email</td><td class="ty">String</td><td class="opt">○</td><td>-</td><td>휴대폰 / 이메일</td></tr>
+        <tr><td class="f">id_type</td><td class="ty">String</td><td class="opt">○</td><td>-</td><td>신분증 종류(enum)</td></tr>
+        <tr><td class="f">id_country_iso_code</td><td class="ty">String</td><td class="opt">○</td><td>3</td><td>신분증 발급국</td></tr>
+        <tr><td class="f">id_number / id_delivery_date / id_expiration_date</td><td class="ty">String/Date</td><td class="opt">○</td><td>-</td><td>신분증 번호 / 발급일 / 만료일</td></tr>
+        <tr><td class="f">occupation</td><td class="ty">String</td><td class="opt">○</td><td>-</td><td>직업</td></tr>
+        <tr><td class="f">code</td><td class="ty">String</td><td class="opt">○</td><td>-</td><td>내부 참조 코드</td></tr>
+        <tr><td class="f">beneficiary_relationship</td><td class="ty">String</td><td class="opt">○</td><td>-</td><td>수취인과의 관계(enum)</td></tr>
+        <tr><td class="f">source_of_funds</td><td class="ty">String</td><td class="opt">○</td><td>-</td><td>자금 출처(enum)</td></tr>
+        <tr><td class="f">bank_account_number</td><td class="ty">String</td><td class="opt">○</td><td>-</td><td>송금인 계좌번호</td></tr>
+      </tbody></table>
+      <div class="muted">※ sender 일부 max length·enum 전체값은 공식 표 미기재 → 확정 전 라이브 문서 확인.</div>
+
+      <h3>beneficiary <span class="muted">— 수취인 (C2C/B2C)</span></h3>
+      <table class="p"><thead><tr><th>필드</th><th>타입</th><th>필수</th><th>최대</th><th>의미</th></tr></thead><tbody>
+        <tr><td class="f">lastname</td><td class="ty">String</td><td class="opt">○</td><td>80</td><td>성</td></tr>
+        <tr><td class="f">lastname2 / middlename / firstname / nativename</td><td class="ty">String</td><td class="opt">○</td><td>64</td><td>추가성 / 중간이름 / 이름 / 현지문자명</td></tr>
+        <tr><td class="f">nationality_country_iso_code</td><td class="ty">String</td><td class="opt">○</td><td>3</td><td>국적(alpha-3)</td></tr>
+        <tr><td class="f">code</td><td class="ty">String</td><td class="opt">○</td><td>64</td><td>수취인 식별 코드</td></tr>
+        <tr><td class="f">date_of_birth</td><td class="ty">String</td><td class="opt">○</td><td>64</td><td>생년월일(ISO 8601)</td></tr>
+        <tr><td class="f">country_of_birth_iso_code</td><td class="ty">String</td><td class="opt">○</td><td>3</td><td>출생국(alpha-3)</td></tr>
+        <tr><td class="f">gender</td><td class="ty">String</td><td class="opt">○</td><td>-</td><td>성별: MALE·FEMALE</td></tr>
+        <tr><td class="f">address</td><td class="ty">String</td><td class="opt">○</td><td>256</td><td>주소</td></tr>
+        <tr><td class="f">postal_code / city</td><td class="ty">String</td><td class="opt">○</td><td>64</td><td>우편번호 / 도시</td></tr>
+        <tr><td class="f">country_iso_code</td><td class="ty">String</td><td class="opt">○</td><td>3</td><td>주소 국가(alpha-3)</td></tr>
+        <tr><td class="f">msisdn / email</td><td class="ty">String</td><td class="opt">○</td><td>64</td><td>휴대폰(국제형식) / 이메일</td></tr>
+        <tr><td class="f">id_type</td><td class="ty">String</td><td class="opt">○</td><td>-</td><td>신분증 종류(enum)</td></tr>
+        <tr><td class="f">id_country_iso_code</td><td class="ty">String</td><td class="opt">○</td><td>3</td><td>신분증 발급국</td></tr>
+        <tr><td class="f">id_number</td><td class="ty">String</td><td class="opt">○</td><td>64</td><td>신분증 번호</td></tr>
+        <tr><td class="f">id_delivery_date / id_expiration_date</td><td class="ty">String</td><td class="opt">○</td><td>64</td><td>발급일 / 만료일(ISO 8601)</td></tr>
+        <tr><td class="f">occupation</td><td class="ty">String</td><td class="opt">○</td><td>80</td><td>직업</td></tr>
+        <tr><td class="f">bank_account_holder_name</td><td class="ty">String</td><td class="opt">○</td><td>144</td><td>예금주명</td></tr>
+        <tr><td class="f">province_state</td><td class="ty">String</td><td class="opt">○</td><td>64</td><td>시/도</td></tr>
+      </tbody></table>
+
+      <h3>금액 객체 <span class="muted">— source · destination · sent_amount · fee</span></h3>
+      <table class="p"><thead><tr><th>필드</th><th>타입</th><th>최대</th><th>의미</th></tr></thead><tbody>
+        <tr><td class="f">amount</td><td class="ty">Decimal</td><td>-</td><td>금액 (mode 에 따라 source/destination 한쪽 null)</td></tr>
+        <tr><td class="f">currency</td><td class="ty">String</td><td>3</td><td>통화(ISO 4217)</td></tr>
+        <tr><td class="f">country_iso_code</td><td class="ty">String</td><td>3</td><td>국가(alpha-3) — source 에만</td></tr>
+      </tbody></table>
+    </section>
+
+    <section id="fields-endpoints">
+      <h2>10. 요청·응답 파라미터</h2>
+
+      <h3>지급처 — Payer 객체 (GET /payers) <span class="muted">— 실제 응답 기준</span></h3>
+      <div class="warn"><b>실제 응답 확인:</b> <code>minimum/maximum_transaction_amount</code> 는 Payer 최상위가 아니라 <b><code>transaction_types[유형]</code> 안에</b> 있다. 또 금액은 <b>문자열</b>(<code>"500000.00000000"</code>)로 내려오고, max 는 <code>null</code> 가능.</div>
+      <table class="p"><thead><tr><th>필드</th><th>타입</th><th>의미</th></tr></thead><tbody>
+        <tr><td class="f">id</td><td class="ty">Integer</td><td>지급처 ID (= 견적의 payer_id)</td></tr>
+        <tr><td class="f">name</td><td class="ty">String</td><td>지급처(은행/월렛) 이름</td></tr>
+        <tr><td class="f">precision</td><td class="ty">Integer</td><td>금액 소수 자릿수 (THB=2, IDR=0)</td></tr>
+        <tr><td class="f">increment</td><td class="ty">Decimal</td><td>금액 최소 단위(이 배수만 허용) (THB=0.01, IDR=1)</td></tr>
+        <tr><td class="f">currency</td><td class="ty">String</td><td>지급 통화(ISO 4217)</td></tr>
+        <tr><td class="f">country_iso_code</td><td class="ty">String</td><td>지급 국가(ISO 3166-1 alpha-3)</td></tr>
+        <tr><td class="f">service</td><td class="ty">Object</td><td>지급 수단 <code>{id, name}</code> (예: BankAccount=2)</td></tr>
+        <tr><td class="f">transaction_types</td><td class="ty">Object</td><td>거래유형(C2C 등)별 요구사항 (아래 표)</td></tr>
+      </tbody></table>
+
+      <h4 style="margin:18px 0 6px;font-size:14px;color:var(--t-03)">transaction_types[유형] 내부 (예: C2C)</h4>
+      <table class="p"><thead><tr><th>필드</th><th>타입</th><th>의미</th></tr></thead><tbody>
+        <tr><td class="f">minimum_transaction_amount</td><td class="ty">String(Decimal)</td><td>최소 거래 금액 (예: "50.00000000")</td></tr>
+        <tr><td class="f">maximum_transaction_amount</td><td class="ty">String(Decimal)</td><td>최대 거래 금액 (null = 무제한)</td></tr>
+        <tr><td class="f">credit_party_identifiers_accepted</td><td class="ty">Array[Array]</td><td>허용 수취인 식별자 조합 (예: <code>[["bank_account_number"]]</code>)</td></tr>
+        <tr><td class="f">required_sending_entity_fields</td><td class="ty">Array[Array]</td><td>송금인 필수 필드 조합(택1). 예: <code>[["lastname","country_iso_code","id_type","id_number"], …]</code></td></tr>
+        <tr><td class="f">required_receiving_entity_fields</td><td class="ty">Array[Array]</td><td>수취인 필수 필드 조합 (예: <code>[["lastname"]]</code>)</td></tr>
+        <tr><td class="f">required_documents</td><td class="ty">Array[Array]</td><td>필요 증빙 문서 조합 (<code>[[]]</code> = 불필요)</td></tr>
+        <tr><td class="f">credit_party_information</td><td class="ty">Object</td><td>CPI 가용: <code>{credit_party_identifiers_accepted}</code> (<code>[[]]</code> = 미지원)</td></tr>
+        <tr><td class="f">credit_party_verification</td><td class="ty">Object</td><td>CPV 가용: <code>{credit_party_identifiers_accepted, required_receiving_entity_fields}</code></td></tr>
+        <tr><td class="f">purpose_of_remittance_values_accepted</td><td class="ty">Array</td><td>허용 송금목적 값 (<code>[]</code> = 제약 없음)</td></tr>
+      </tbody></table>
+
+      <h4 style="margin:18px 0 6px;font-size:14px;color:var(--t-03)">응답 예시 (THB·IDR 은행, 일부 발췌)</h4>
+      <pre><code>[
+  {
+    "id": 49, "name": "Bangkok Bank Public Company Limited",
+    "country_iso_code": "THA", "currency": "THB",
+    "precision": 2, "increment": 0.01,
+    "service": { "id": 2, "name": "BankAccount" },
+    "transaction_types": {
+      "C2C": {
+        "minimum_transaction_amount": "50.00000000",
+        "maximum_transaction_amount": "500000.00000000",
+        "credit_party_identifiers_accepted": [ ["bank_account_number"] ],
+        "required_sending_entity_fields": [
+          ["lastname","country_iso_code","id_type","id_number"],
+          ["lastname","address","city","country_iso_code"],
+          ["lastname","date_of_birth","country_of_birth_iso_code","address","country_iso_code"]
+        ],
+        "required_receiving_entity_fields": [ ["lastname"] ],
+        "required_documents": [ [] ],
+        "credit_party_information": { "credit_party_identifiers_accepted": [ [] ] },
+        "credit_party_verification": {
+          "credit_party_identifiers_accepted": [ [] ],
+          "required_receiving_entity_fields": [ [] ]
+        },
+        "purpose_of_remittance_values_accepted": []
+      }
+    }
+  },
+  {
+    "id": 214, "name": "Bank Rakyat Indonesia (BRI)",
+    "country_iso_code": "IDN", "currency": "IDR",
+    "precision": 0, "increment": 1,
+    "service": { "id": 2, "name": "BankAccount" },
+    "transaction_types": {
+      "C2C": {
+        "minimum_transaction_amount": "10000.00000000",
+        "maximum_transaction_amount": "2000000000.00000000",
+        "credit_party_identifiers_accepted": [ ["bank_account_number"] ],
+        "required_sending_entity_fields": [ ["lastname"] ],
+        "required_receiving_entity_fields": [ ["lastname"] ],
+        "credit_party_verification": {
+          "credit_party_identifiers_accepted": [ ["bank_account_number"] ],
+          "required_receiving_entity_fields": [ [] ]
+        }
+      }
+    }
+  }
+]</code></pre>
+      <div class="note">읽는 법: BRI(IDR)는 <code>increment=1·precision=0</code> → 정수 IDR, 최소 10,000 ~ 최대 20억. CPV 가 <code>["bank_account_number"]</code> 라 <b>계좌검증 지원</b>(BRI) vs Bangkok Bank 은 <code>[[]]</code> 라 <b>CPV 미지원</b>. 송금인 필수필드는 은행마다 다르며 <b>여러 조합 중 택1</b>(첫 조합 우선).</div>
+
+      <h3>견적 요청 — POST /quotations</h3>
+      <table class="p"><thead><tr><th>필드</th><th>타입</th><th>필수</th><th>최대</th><th>의미</th></tr></thead><tbody>
+        <tr><td class="f">external_id</td><td class="ty">String</td><td class="req">●</td><td>64</td><td>우리 거래키(멱등키)</td></tr>
+        <tr><td class="f">payer_id</td><td class="ty">Integer</td><td class="req">●</td><td>-</td><td>지급처 ID</td></tr>
+        <tr><td class="f">mode</td><td class="ty">String</td><td class="req">●</td><td>-</td><td>SOURCE_AMOUNT / DESTINATION_AMOUNT</td></tr>
+        <tr><td class="f">transaction_type</td><td class="ty">String</td><td class="req">●</td><td>-</td><td>C2C·C2B·B2C·B2B</td></tr>
+        <tr><td class="f">source / destination</td><td class="ty">Object</td><td class="req">●</td><td>-</td><td>보내는/받는 금액 객체</td></tr>
+      </tbody></table>
+
+      <h3>견적 응답 — Quotation 객체</h3>
+      <table class="p"><thead><tr><th>필드</th><th>타입</th><th>의미</th></tr></thead><tbody>
+        <tr><td class="f">id / external_id</td><td class="ty">Integer(64)/String</td><td>견적 ID / 요청값 에코</td></tr>
+        <tr><td class="f">payer / mode / transaction_type</td><td class="ty">Object/String</td><td>지급처 / 모드 / 거래유형</td></tr>
+        <tr><td class="f">source / destination / sent_amount</td><td class="ty">Object</td><td>보낼/받을(계산)/실제 보낸 금액</td></tr>
+        <tr><td class="f">wholesale_fx_rate</td><td class="ty">Decimal</td><td>도매 환율(견적 동안 고정)</td></tr>
+        <tr><td class="f">fee</td><td class="ty">Object</td><td>Thunes 수수료 {currency,amount}</td></tr>
+        <tr><td class="f">creation_date / expiration_date</td><td class="ty">DateTime</td><td>생성/만료 시각 — 만료 내 confirm 필요</td></tr>
+      </tbody></table>
+
+      <h3>수취인 검증/조회 — CPV · CPI</h3>
+      <table class="p"><thead><tr><th>필드</th><th>타입</th><th>필수</th><th>의미</th></tr></thead><tbody>
+        <tr><td class="f">credit_party_identifier</td><td class="ty">Object</td><td class="req">●</td><td>(요청) 수취인 식별자</td></tr>
+        <tr><td class="f">beneficiary / receiving_business</td><td class="ty">Object</td><td class="opt">○</td><td>(CPV 요청) 이름매칭용 / (CPI 응답) 수취인 상세</td></tr>
+        <tr><td class="f">account_status</td><td class="ty">String</td><td class="opt">-</td><td>(CPV 응답) AVAILABLE·BARRED 등</td></tr>
+        <tr><td class="f">name_match_result</td><td class="ty">String</td><td class="opt">-</td><td>(CPV 응답, 일부 payer) 이름 일치 결과</td></tr>
+        <tr><td class="f">id</td><td class="ty">Integer</td><td class="opt">-</td><td>(응답) 검증/조회 요청 ID</td></tr>
+      </tbody></table>
+
+      <h3>거래 생성 요청 — POST /quotations/{id}/transactions <span class="muted">(C2C 기준)</span></h3>
+      <table class="p"><thead><tr><th>필드</th><th>타입</th><th>필수</th><th>최대</th><th>의미</th></tr></thead><tbody>
+        <tr><td class="f">credit_party_identifier</td><td class="ty">Object</td><td class="req">●</td><td>-</td><td>수취인 식별자</td></tr>
+        <tr><td class="f">sender / beneficiary</td><td class="ty">Object</td><td class="req">●†</td><td>-</td><td>송금인 / 수취인 (C2C 필수)</td></tr>
+        <tr><td class="f">sending_business / receiving_business</td><td class="ty">Object</td><td class="opt">†</td><td>-</td><td>송금/수취 사업자(B2x/C2B) — C2C 미사용</td></tr>
+        <tr><td class="f">external_id</td><td class="ty">String</td><td class="req">●</td><td>64</td><td>우리 거래키(멱등)</td></tr>
+        <tr><td class="f">external_code</td><td class="ty">String</td><td class="opt">○</td><td>64</td><td>외부 참조 코드</td></tr>
+        <tr><td class="f">callback_url</td><td class="ty">String</td><td class="opt">○</td><td>-</td><td>상태 콜백 URL</td></tr>
+        <tr><td class="f">purpose_of_remittance</td><td class="ty">String</td><td class="req">●</td><td>64</td><td>송금 목적(enum)</td></tr>
+        <tr><td class="f">retail_rate / retail_fee</td><td class="ty">Decimal</td><td class="opt">○</td><td>-</td><td>리테일 환율 / 수수료</td></tr>
+        <tr><td class="f">retail_fee_currency</td><td class="ty">String</td><td class="opt">○</td><td>3</td><td>리테일 수수료 통화</td></tr>
+        <tr><td class="f">document_reference_number</td><td class="ty">String</td><td class="opt">○</td><td>64</td><td>증빙 문서 참조번호 (B2B 필수)</td></tr>
+        <tr><td class="f">additional_information_1~3</td><td class="ty">String</td><td class="opt">○</td><td>64</td><td>부가 정보</td></tr>
+        <tr><td class="f">reference</td><td class="ty">String</td><td class="opt">○</td><td>16</td><td>수취인 명세서에 찍히는 값</td></tr>
+      </tbody></table>
+
+      <h3>거래 응답 — Transaction 객체</h3>
+      <table class="p"><thead><tr><th>필드</th><th>타입</th><th>의미</th></tr></thead><tbody>
+        <tr><td class="f">id</td><td class="ty">Integer(64)</td><td>거래 ID</td></tr>
+        <tr><td class="f">status / status_message</td><td class="ty">String</td><td>상태 코드(10000) / 설명(CREATED)</td></tr>
+        <tr><td class="f">status_class / status_class_message</td><td class="ty">String</td><td>상태 클래스(1~7) / 설명</td></tr>
+        <tr><td class="f">external_id / external_code</td><td class="ty">String</td><td>우리 참조 ID / 코드</td></tr>
+        <tr><td class="f">transaction_type</td><td class="ty">String</td><td>거래 유형</td></tr>
+        <tr><td class="f">payer_transaction_reference / _code</td><td class="ty">String</td><td>지급처 거래 참조 / 코드</td></tr>
+        <tr><td class="f">creation_date / expiration_date</td><td class="ty">String</td><td>생성/만료 시각(HTTP 포맷)</td></tr>
+        <tr><td class="f">credit_party_identifier / source / destination / payer / sender / beneficiary</td><td class="ty">Object</td><td>요청값·계산값 에코</td></tr>
+        <tr><td class="f">sent_amount / fee</td><td class="ty">Object</td><td>실제 보낸 금액 / Thunes 수수료</td></tr>
+        <tr><td class="f">wholesale_fx_rate / retail_rate / retail_fee</td><td class="ty">Decimal</td><td>도매 환율 / 리테일 환율 / 리테일 수수료</td></tr>
+        <tr><td class="f">purpose_of_remittance / document_reference_number / additional_information_1~3 / reference</td><td class="ty">String</td><td>송금목적 / 증빙번호 / 부가정보 / 명세서 표기값</td></tr>
+      </tbody></table>
+
+      <h3>확정·취소 (바디 없음) · 첨부 (multipart)</h3>
+      <table class="p"><thead><tr><th>필드</th><th>타입</th><th>필수</th><th>최대</th><th>의미</th></tr></thead><tbody>
+        <tr><td class="f">(confirm/cancel)</td><td class="ty">—</td><td class="opt">-</td><td>-</td><td>요청 바디 없음, 응답=Transaction 객체</td></tr>
+        <tr><td class="f">name</td><td class="ty">String</td><td class="req">●</td><td>64</td><td>(첨부) 첨부 이름</td></tr>
+        <tr><td class="f">type</td><td class="ty">String</td><td class="req">●</td><td>-</td><td>(첨부) 문서 종류: invoice·purchase_order·contract</td></tr>
+        <tr><td class="f">file</td><td class="ty">File</td><td class="req">●</td><td>8MB</td><td>(첨부) 파일 — 거래당 최대 3개, 확정 후 불가</td></tr>
+      </tbody></table>
+      <div class="warn">필수 표기·max·enum 일부는 공식 문서 요약 기반 → 코드 매핑 전 라이브 문서 verbatim 재확인.</div>
+    </section>
+
+    <footer>Hecto Financial · 소액해외송금 — Thunes MT V2 API 가이드 (내부 정리, 디자인=Hecto Financial Design System)</footer>
+  </main>
+</div>
+</body>
+</html>
