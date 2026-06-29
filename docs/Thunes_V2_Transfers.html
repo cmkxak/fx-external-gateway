@@ -1,0 +1,821 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thunes Money Transfer V2 · Transfers</title>
+<style>
+:root{
+  --o-05:#FFEFE7;--o-10:#FFE3D8;--o-20:#FFCFBD;--o-50:#FF6114;--o-60:#F85100;--o-70:#D54000;
+  --bg:#FFFFFF;--bg-2:#F6F6F9;--bg-3:#F1EFE8;--line:#E5E5E8;
+  --t1:#151515;--t2:#454545;--t3:#888888;--t4:#B0B0B3;
+  --green:#28C85D;--green-d:#187D3A;--blue:#2465FF;--blue-d:#1439E1;--red:#FF4242;
+  --code-bg:#17171B;--code-line:#2A2A31;--code-tx:#E6E6EA;
+  --radius:12px;--r-sm:6px;--r-pill:9999px;
+  --font:Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --mono:"JetBrains Mono",Consolas,"D2Coding",monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:var(--font);background:var(--bg);color:var(--t1);
+  font-size:15px;line-height:1.65;letter-spacing:-0.02em;-webkit-font-smoothing:antialiased}
+a{color:var(--o-60);text-decoration:none}
+code{font-family:var(--mono);font-size:.86em}
+
+.topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:10px;
+  height:56px;padding:0 24px;background:#fff;border-bottom:1px solid var(--line)}
+.topbar .logo{font-weight:700;font-size:16px;letter-spacing:-0.03em}
+.topbar .logo b{color:var(--o-60)}
+.topbar .tag{font-size:12px;color:var(--t3);padding:3px 8px;background:var(--bg-2);border-radius:var(--r-pill)}
+
+.shell{display:grid;grid-template-columns:236px minmax(0,1fr);max-width:1400px;margin:0 auto}
+
+aside.nav{position:sticky;top:56px;align-self:start;height:calc(100vh - 56px);overflow-y:auto;
+  padding:24px 14px;border-right:1px solid var(--line)}
+aside.nav .grp{font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;
+  color:var(--t4);margin:18px 10px 6px}
+aside.nav a{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;
+  color:var(--t2);font-size:13.5px}
+aside.nav a:hover{background:var(--o-05);color:var(--o-70)}
+aside.nav a.on{background:var(--o-05);color:var(--o-70);font-weight:600}
+.mini{font-family:var(--mono);font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:4px;color:#fff;flex:none}
+.mini.get{background:var(--green)} .mini.post{background:var(--blue)}
+.mini.obj{background:var(--o-50)}
+
+main{min-width:0;padding:0 0 120px}
+.hero{padding:40px 48px 28px;border-bottom:1px solid var(--line)}
+.hero h1{margin:0 0 8px;font-size:26px;font-weight:700;letter-spacing:-0.03em}
+.hero p{margin:0;color:var(--t2);font-size:14.5px}
+.hero .crumb{font-size:12px;color:var(--t3);margin-bottom:12px}
+.hero .crumb b{color:var(--o-60)}
+
+.group-head{padding:34px 48px 0}
+.group-head h2{margin:0;font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--o-60)}
+.group-head p{margin:6px 0 0;color:var(--t3);font-size:13px}
+
+.ep{padding:36px 48px;border-bottom:1px solid var(--line)}
+.ep-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,440px);gap:36px;align-items:start}
+.ep h2.title{margin:0 0 4px;font-size:20px;font-weight:700;letter-spacing:-0.03em}
+.ep .sub{color:var(--t2);font-size:14px;margin:0 0 16px}
+.ep-line{display:flex;align-items:center;gap:8px;margin:14px 0 18px;flex-wrap:wrap}
+.method{font-family:var(--mono);font-weight:700;font-size:11px;padding:4px 9px;border-radius:var(--r-sm);color:#fff}
+.method.get{background:var(--green)} .method.post{background:var(--blue)}
+.tag-obj{font-family:var(--mono);font-weight:700;font-size:11px;padding:4px 9px;border-radius:var(--r-sm);background:var(--o-50);color:#fff}
+.url{font-family:var(--mono);font-size:12.5px;color:var(--t1);background:var(--bg-2);
+  border:1px solid var(--line);border-radius:var(--r-sm);padding:4px 10px;word-break:break-all}
+
+h3.sec{font-size:12px;font-weight:700;letter-spacing:0.03em;text-transform:uppercase;
+  color:var(--t3);margin:24px 0 6px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+
+.param{padding:12px 0;border-bottom:1px solid var(--bg-3)}
+.param:last-child{border-bottom:0}
+.param-row{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.pname{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--t1)}
+.ptype{font-family:var(--mono);font-size:11.5px;color:var(--blue-d)}
+a.ptype.lnk{color:var(--o-60);border-bottom:1px dashed var(--o-20)}
+a.ptype.lnk::after{content:" \2197";font-size:10px}
+a.ptype.lnk:hover{color:var(--o-70);border-bottom-color:var(--o-50)}
+.req{font-size:11px;font-weight:600;color:var(--o-70);background:var(--o-05);padding:1px 7px;border-radius:var(--r-pill)}
+.opt{font-size:11px;color:var(--t4);background:var(--bg-2);padding:1px 7px;border-radius:var(--r-pill)}
+.cond{font-size:11px;color:var(--blue-d);background:var(--bg-2);padding:1px 7px;border-radius:var(--r-pill)}
+.max{font-family:var(--mono);font-size:10.5px;color:var(--t4)}
+.pdesc{margin-top:4px;color:var(--t2);font-size:13px}
+.pdesc code{background:var(--bg-2);border:1px solid var(--line);border-radius:4px;padding:0 5px;color:var(--o-70)}
+
+.enum{display:inline-flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.enum span{font-family:var(--mono);font-size:11px;background:var(--bg-2);border:1px solid var(--line);
+  border-radius:var(--r-sm);padding:1px 7px;color:var(--t2)}
+
+.note,.warn{border-radius:var(--radius);padding:12px 14px;margin:14px 0;font-size:13px;color:var(--t2)}
+.note{background:var(--o-05);border:1px solid var(--o-20);border-left:3px solid var(--o-50)}
+.warn{background:#FFEEED;border:1px solid #FFCDC9;border-left:3px solid var(--red)}
+.note b,.warn b{color:var(--t1)}
+
+.samples{position:sticky;top:76px;display:flex;flex-direction:column;gap:14px}
+.sample{background:var(--code-bg);border-radius:var(--radius);overflow:hidden;border:1px solid var(--code-line)}
+.sample-bar{display:flex;align-items:center;gap:8px;padding:9px 14px;border-bottom:1px solid var(--code-line)}
+.sample-bar .dot{font-size:11px;font-weight:600;color:#9b9ba6;letter-spacing:.02em}
+.sample-bar .st{margin-left:auto;font-family:var(--mono);font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:var(--r-pill)}
+.st.ok{background:rgba(40,200,93,.16);color:#5fe39a}
+.st.crt{background:rgba(36,101,255,.18);color:#84acff}
+.st.obj{background:rgba(255,97,20,.18);color:#ffae84}
+.sample pre{margin:0;padding:14px 16px;overflow-x:auto;font-family:var(--mono);font-size:12px;line-height:1.6;color:var(--code-tx)}
+.sample pre .k{color:#d98cff}.sample pre .s{color:#9ae6a6}.sample pre .n{color:#f0a868}.sample pre .c{color:#6f6f7a}
+
+footer{padding:28px 48px;color:var(--t3);font-size:12px}
+
+@media(max-width:1080px){.ep-grid{grid-template-columns:1fr}.samples{position:static}}
+@media(max-width:760px){.shell{grid-template-columns:1fr}aside.nav{display:none}.hero,.ep,.group-head,footer{padding-left:20px;padding-right:20px}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="logo"><b>Thunes</b> Money Transfer V2</span>
+  <span class="tag">Hecto · 소액해외송금</span>
+</div>
+
+<div class="shell">
+  <aside class="nav">
+    <div class="grp">Discovery</div>
+    <a href="#disc-services"><span class="mini get">GET</span> Services 조회</a>
+    <a href="#disc-payers"><span class="mini get">GET</span> Payers 조회</a>
+    <a href="#disc-payer-get"><span class="mini get">GET</span> Payer 단건</a>
+
+    <div class="grp">Transfers</div>
+    <a href="#quotation-create"><span class="mini post">POST</span> 견적 생성</a>
+    <a href="#quotation-get"><span class="mini get">GET</span> 견적 조회</a>
+    <a href="#transaction-create"><span class="mini post">POST</span> 거래 생성</a>
+    <a href="#transaction-confirm"><span class="mini post">POST</span> 거래 확정</a>
+    <a href="#transaction-get"><span class="mini get">GET</span> 거래 조회</a>
+    <a href="#transaction-cancel"><span class="mini post">POST</span> 거래 취소</a>
+
+    <div class="grp">Objects</div>
+    <a href="#obj-quotation"><span class="mini obj">OBJ</span> Quotation</a>
+    <a href="#obj-transaction"><span class="mini obj">OBJ</span> Transaction</a>
+    <a href="#obj-payer"><span class="mini obj">OBJ</span> Payer</a>
+    <a href="#obj-service"><span class="mini obj">OBJ</span> Service</a>
+    <a href="#obj-source"><span class="mini obj">OBJ</span> Source</a>
+    <a href="#obj-destination"><span class="mini obj">OBJ</span> Destination</a>
+    <a href="#obj-money"><span class="mini obj">OBJ</span> Amount (Money)</a>
+    <a href="#obj-cpi"><span class="mini obj">OBJ</span> Credit Party Identifier</a>
+    <a href="#obj-sender"><span class="mini obj">OBJ</span> Sender</a>
+    <a href="#obj-beneficiary"><span class="mini obj">OBJ</span> Beneficiary</a>
+  </aside>
+
+  <main>
+    <div class="hero">
+      <div class="crumb"><b>Money Transfer V2</b> / Transfers</div>
+      <h1>Transfers</h1>
+      <p>견적으로 환율·수수료를 고정하고 → 거래 생성 → 확정으로 자금을 움직입니다. 타입이 <span class="ptype" style="color:var(--o-60)">Object ↗</span> 인 필드는 클릭하면 객체 상세로 이동합니다.</p>
+    </div>
+
+    <div class="group-head">
+      <h2>Discovery · Payers</h2>
+      <p>송금 전에 가능한 서비스(코리도)와 지급처(payer)를 조회한다. payer 의 <code>transaction_types</code> 가 금액·필수필드 규칙의 단일 출처다.</p>
+    </div>
+
+    <!-- ============ Services 조회 ============ -->
+    <section class="ep" id="disc-services">
+      <div class="ep-grid">
+        <div class="doc">
+          <h2 class="title">Services 조회</h2>
+          <p class="sub">계정에 활성화된 서비스(지급 수단/코리도) 목록.</p>
+          <div class="ep-line"><span class="method get">GET</span><span class="url">/v2/money-transfer/services</span></div>
+          <h3 class="sec">Query</h3>
+          <div class="param"><div class="param-row"><span class="pname">page</span><span class="ptype">Integer</span><span class="opt">선택</span></div><div class="pdesc">페이지 번호(기본 1).</div></div>
+          <div class="param"><div class="param-row"><span class="pname">per_page</span><span class="ptype">Integer</span><span class="opt">선택</span></div><div class="pdesc">페이지당 수(기본 50, 최대 100).</div></div>
+          <div class="param"><div class="param-row"><span class="pname">country_iso_code</span><span class="ptype">String</span><span class="opt">선택</span><span class="max">3</span></div><div class="pdesc">국가 필터(ISO 3166-1 alpha-3).</div></div>
+          <h3 class="sec">Response · 200</h3>
+          <div class="param"><div class="param-row"><span class="pname">(반환)</span><a class="ptype lnk" href="#obj-service">Service[]</a></div><div class="pdesc">서비스 객체 배열(페이지네이션 헤더 포함).</div></div>
+        </div>
+        <div class="samples">
+          <div class="sample"><div class="sample-bar"><span class="dot">요청</span><span class="st ok">GET</span></div>
+<pre><span class="k">GET</span> /v2/money-transfer/services</pre></div>
+          <div class="sample"><div class="sample-bar"><span class="dot">응답</span><span class="st ok">200 OK</span></div>
+<pre><span class="c">X-Total: 6  X-Page: 1</span>
+[
+  { <span class="k">"id"</span>: <span class="n">1</span>, <span class="k">"name"</span>: <span class="s">"MobileWallet"</span> },
+  { <span class="k">"id"</span>: <span class="n">2</span>, <span class="k">"name"</span>: <span class="s">"BankAccount"</span> },
+  { <span class="k">"id"</span>: <span class="n">3</span>, <span class="k">"name"</span>: <span class="s">"CashPickup"</span> }
+]</pre></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ Payers 조회 ============ -->
+    <section class="ep" id="disc-payers">
+      <div class="ep-grid">
+        <div class="doc">
+          <h2 class="title">Payers 조회 (목록)</h2>
+          <p class="sub">계정에 이용 가능한 지급처 목록. 필터로 좁힌다. 각 payer 의 <code>id</code> 가 견적 요청의 <code>payer_id</code>.</p>
+          <div class="ep-line"><span class="method get">GET</span><span class="url">/v2/money-transfer/payers</span></div>
+          <h3 class="sec">Query</h3>
+          <div class="param"><div class="param-row"><span class="pname">page</span><span class="ptype">Integer</span><span class="opt">선택</span></div><div class="pdesc">페이지 번호(기본 1).</div></div>
+          <div class="param"><div class="param-row"><span class="pname">per_page</span><span class="ptype">Integer</span><span class="opt">선택</span></div><div class="pdesc">페이지당 수(기본 50, 최대 100).</div></div>
+          <div class="param"><div class="param-row"><span class="pname">service_id</span><span class="ptype">Integer</span><span class="opt">선택</span></div><div class="pdesc">서비스 ID 필터.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">country_iso_code</span><span class="ptype">String</span><span class="opt">선택</span><span class="max">3</span></div><div class="pdesc">국가 필터(alpha-3).</div></div>
+          <div class="param"><div class="param-row"><span class="pname">currency</span><span class="ptype">String</span><span class="opt">선택</span><span class="max">3</span></div><div class="pdesc">통화 필터(ISO 4217).</div></div>
+          <h3 class="sec">Response · 200</h3>
+          <div class="param"><div class="param-row"><span class="pname">(반환)</span><a class="ptype lnk" href="#obj-payer">Payer[]</a></div><div class="pdesc">지급처 객체 배열(페이지네이션).</div></div>
+        </div>
+        <div class="samples">
+          <div class="sample"><div class="sample-bar"><span class="dot">요청</span><span class="st ok">GET</span></div>
+<pre><span class="k">GET</span> /v2/money-transfer/payers?service_id=2&amp;country_iso_code=IDN&amp;currency=IDR</pre></div>
+          <div class="sample"><div class="sample-bar"><span class="dot">응답</span><span class="st ok">200 OK</span></div>
+<pre>[
+  {
+    <span class="k">"id"</span>: <span class="n">214</span>, <span class="k">"name"</span>: <span class="s">"Bank Rakyat Indonesia (BRI)"</span>,
+    <span class="k">"country_iso_code"</span>: <span class="s">"IDN"</span>, <span class="k">"currency"</span>: <span class="s">"IDR"</span>,
+    <span class="k">"precision"</span>: <span class="n">0</span>, <span class="k">"increment"</span>: <span class="n">1</span>,
+    <span class="k">"service"</span>: { <span class="k">"id"</span>: <span class="n">2</span>, <span class="k">"name"</span>: <span class="s">"BankAccount"</span> },
+    <span class="k">"transaction_types"</span>: { <span class="s">"C2C"</span>: { <span class="c">/* 아래 Payer 객체 참조 */</span> } }
+  }
+]</pre></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ Payer 단건 ============ -->
+    <section class="ep" id="disc-payer-get">
+      <div class="ep-grid">
+        <div class="doc">
+          <h2 class="title">Payer 단건 조회</h2>
+          <p class="sub">지정 지급처 단건. 견적·거래 직전 <code>transaction_types</code>(필수필드·금액·CPV 가용)를 확인하는 용도.</p>
+          <div class="ep-line"><span class="method get">GET</span><span class="url">/v2/money-transfer/payers/{id}</span></div>
+          <h3 class="sec">Path</h3>
+          <div class="param"><div class="param-row"><span class="pname">id</span><span class="ptype">Integer</span><span class="req">필수</span></div><div class="pdesc">지급처 ID.</div></div>
+          <h3 class="sec">Response · 200</h3>
+          <div class="param"><div class="param-row"><span class="pname">(반환)</span><a class="ptype lnk" href="#obj-payer">Payer</a></div><div class="pdesc">지급처 객체 단건.</div></div>
+        </div>
+        <div class="samples">
+          <div class="sample"><div class="sample-bar"><span class="dot">요청</span><span class="st ok">GET</span></div>
+<pre><span class="k">GET</span> /v2/money-transfer/payers/214</pre></div>
+          <div class="sample"><div class="sample-bar"><span class="dot">응답</span><span class="st obj">Payer</span></div>
+<pre>{
+  <span class="k">"id"</span>: <span class="n">214</span>, <span class="k">"name"</span>: <span class="s">"Bank Rakyat Indonesia (BRI)"</span>,
+  <span class="k">"country_iso_code"</span>: <span class="s">"IDN"</span>, <span class="k">"currency"</span>: <span class="s">"IDR"</span>,
+  <span class="k">"precision"</span>: <span class="n">0</span>, <span class="k">"increment"</span>: <span class="n">1</span>,
+  <span class="k">"service"</span>: { <span class="k">"id"</span>: <span class="n">2</span>, <span class="k">"name"</span>: <span class="s">"BankAccount"</span> },
+  <span class="k">"transaction_types"</span>: {
+    <span class="k">"C2C"</span>: {
+      <span class="k">"minimum_transaction_amount"</span>: <span class="s">"10000.00000000"</span>,
+      <span class="k">"maximum_transaction_amount"</span>: <span class="s">"2000000000.00000000"</span>,
+      <span class="k">"credit_party_identifiers_accepted"</span>: [ [<span class="s">"bank_account_number"</span>] ],
+      <span class="k">"required_sending_entity_fields"</span>: [ [<span class="s">"lastname"</span>] ],
+      <span class="k">"required_receiving_entity_fields"</span>: [ [<span class="s">"lastname"</span>] ],
+      <span class="k">"required_documents"</span>: [ [] ],
+      <span class="k">"credit_party_information"</span>: { <span class="k">"credit_party_identifiers_accepted"</span>: [ [] ] },
+      <span class="k">"credit_party_verification"</span>: {
+        <span class="k">"credit_party_identifiers_accepted"</span>: [ [<span class="s">"bank_account_number"</span>] ],
+        <span class="k">"required_receiving_entity_fields"</span>: [ [] ]
+      },
+      <span class="k">"purpose_of_remittance_values_accepted"</span>: []
+    }
+  }
+}</pre></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="group-head">
+      <h2>Transfers</h2>
+      <p>견적 → 거래 생성 → 확정.</p>
+    </div>
+
+    <!-- ============ 견적 생성 ============ -->
+    <section class="ep" id="quotation-create">
+      <div class="ep-grid">
+        <div class="doc">
+          <h2 class="title">견적 생성</h2>
+          <p class="sub">지급처(payer)와 금액으로 환율·수수료를 고정한 견적을 만듭니다. 견적은 <code>expiration_date</code> 까지만 유효합니다.</p>
+          <div class="ep-line"><span class="method post">POST</span><span class="url">/v2/money-transfer/quotations</span></div>
+
+          <h3 class="sec">Body</h3>
+          <div class="param"><div class="param-row"><span class="pname">external_id</span><span class="ptype">String</span><span class="req">필수</span><span class="max">64</span></div><div class="pdesc">우리 측 거래키(멱등키).</div></div>
+          <div class="param"><div class="param-row"><span class="pname">payer_id</span><span class="ptype">Integer</span><span class="req">필수</span></div><div class="pdesc">지급처 ID. <code>64-bit(Long)</code> 사용.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">mode</span><span class="ptype">String</span><span class="req">필수</span></div><div class="pdesc">금액 지정 기준. 선택한 쪽 <code>amount</code> 만 채우고 반대쪽은 <code>null</code>.</div><div class="enum"><span>SOURCE_AMOUNT</span><span>DESTINATION_AMOUNT</span></div></div>
+          <div class="param"><div class="param-row"><span class="pname">transaction_type</span><span class="ptype">String</span><span class="req">필수</span></div><div class="pdesc">거래 유형. 우리는 <code>C2C</code> 기준.</div><div class="enum"><span>C2C</span><span>C2B</span><span>B2C</span><span>B2B</span></div></div>
+          <div class="param"><div class="param-row"><span class="pname">source</span><a class="ptype lnk" href="#obj-source">Source</a><span class="req">필수</span></div><div class="pdesc">보내는(출발) 금액 정보.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">destination</span><a class="ptype lnk" href="#obj-destination">Destination</a><span class="req">필수</span></div><div class="pdesc">받는(도착) 금액 정보.</div></div>
+
+          <h3 class="sec">Response · 201</h3>
+          <div class="param"><div class="param-row"><span class="pname">(반환)</span><a class="ptype lnk" href="#obj-quotation">Quotation</a></div><div class="pdesc">생성된 견적 객체.</div></div>
+          <div class="note">금액은 <b>Decimal</b>, 통화별 <code>precision</code>/<code>increment</code> 규칙 준수(예: IDR <code>precision=0·increment=1</code>).</div>
+        </div>
+        <div class="samples">
+          <div class="sample"><div class="sample-bar"><span class="dot">요청</span><span class="st crt">POST</span></div>
+<pre><span class="k">POST</span> /v2/money-transfer/quotations
+{
+  <span class="k">"external_id"</span>: <span class="s">"9481184321482"</span>,
+  <span class="k">"payer_id"</span>: <span class="n">214</span>,
+  <span class="k">"mode"</span>: <span class="s">"SOURCE_AMOUNT"</span>,
+  <span class="k">"transaction_type"</span>: <span class="s">"C2C"</span>,
+  <span class="k">"source"</span>: { <span class="k">"amount"</span>: <span class="s">"10"</span>, <span class="k">"currency"</span>: <span class="s">"SGD"</span>, <span class="k">"country_iso_code"</span>: <span class="s">"SGP"</span> },
+  <span class="k">"destination"</span>: { <span class="k">"amount"</span>: <span class="k">null</span>, <span class="k">"currency"</span>: <span class="s">"IDR"</span> }
+}</pre></div>
+          <div class="sample"><div class="sample-bar"><span class="dot">응답</span><span class="st crt">201 Created</span></div>
+<pre>{
+  <span class="k">"id"</span>: <span class="n">1</span>,
+  <span class="k">"external_id"</span>: <span class="s">"9481184321482"</span>,
+  <span class="k">"mode"</span>: <span class="s">"SOURCE_AMOUNT"</span>,
+  <span class="k">"transaction_type"</span>: <span class="s">"C2C"</span>,
+  <span class="k">"source"</span>: { <span class="k">"country_iso_code"</span>: <span class="s">"SGP"</span>, <span class="k">"currency"</span>: <span class="s">"SGD"</span>, <span class="k">"amount"</span>: <span class="n">10</span> },
+  <span class="k">"destination"</span>: { <span class="k">"currency"</span>: <span class="s">"IDR"</span>, <span class="k">"amount"</span>: <span class="n">110000</span> },
+  <span class="k">"sent_amount"</span>: { <span class="k">"currency"</span>: <span class="s">"SGD"</span>, <span class="k">"amount"</span>: <span class="n">10</span> },
+  <span class="k">"wholesale_fx_rate"</span>: <span class="n">11000.0</span>,
+  <span class="k">"fee"</span>: { <span class="k">"currency"</span>: <span class="s">"SGD"</span>, <span class="k">"amount"</span>: <span class="n">1.0</span> },
+  <span class="k">"expiration_date"</span>: <span class="s">"2024-01-03T09:07:44Z"</span>
+}</pre></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 견적 조회 ============ -->
+    <section class="ep" id="quotation-get">
+      <div class="ep-grid">
+        <div class="doc">
+          <h2 class="title">견적 조회</h2>
+          <p class="sub">견적 ID 또는 우리 측 <code>external_id</code> 로 조회합니다.</p>
+          <div class="ep-line"><span class="method get">GET</span><span class="url">/v2/money-transfer/quotations/{id}</span></div>
+          <div class="ep-line"><span class="method get">GET</span><span class="url">/v2/money-transfer/quotations/ext-{external_id}</span></div>
+          <h3 class="sec">Path</h3>
+          <div class="param"><div class="param-row"><span class="pname">id</span><span class="ptype">Integer</span><span class="req">필수</span></div><div class="pdesc">견적 ID. (ext 변형은 <code>external_id</code>)</div></div>
+          <h3 class="sec">Response · 200</h3>
+          <div class="param"><div class="param-row"><span class="pname">(반환)</span><a class="ptype lnk" href="#obj-quotation">Quotation</a></div><div class="pdesc">견적 객체.</div></div>
+        </div>
+        <div class="samples">
+          <div class="sample"><div class="sample-bar"><span class="dot">요청</span><span class="st ok">GET</span></div>
+<pre><span class="k">GET</span> /v2/money-transfer/quotations/1
+<span class="c"># 또는</span>
+<span class="k">GET</span> /v2/money-transfer/quotations/ext-9481184321482</pre></div>
+          <div class="sample"><div class="sample-bar"><span class="dot">응답</span><span class="st ok">200 OK</span></div>
+<pre>{
+  <span class="k">"id"</span>: <span class="n">1</span>,
+  <span class="k">"external_id"</span>: <span class="s">"9481184321482"</span>,
+  <span class="k">"wholesale_fx_rate"</span>: <span class="n">11000.0</span>,
+  <span class="k">"fee"</span>: { <span class="k">"currency"</span>: <span class="s">"SGD"</span>, <span class="k">"amount"</span>: <span class="n">1.0</span> },
+  <span class="k">"expiration_date"</span>: <span class="s">"2024-01-03T09:07:44Z"</span>
+  <span class="c">// …Quotation 객체 전체</span>
+}</pre></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 거래 생성 ============ -->
+    <section class="ep" id="transaction-create">
+      <div class="ep-grid">
+        <div class="doc">
+          <h2 class="title">거래 생성</h2>
+          <p class="sub">유효한 견적으로 거래를 생성합니다. 생성 직후 상태는 <code>CREATED(10000)</code>. <code>ext-{external_id}</code> 변형 동일.</p>
+          <div class="ep-line"><span class="method post">POST</span><span class="url">/v2/money-transfer/quotations/{id}/transactions</span></div>
+          <h3 class="sec">Body <span style="color:var(--t4);font-weight:400">— V2 docs 기준</span></h3>
+          <div class="param"><div class="param-row"><span class="pname">credit_party_identifier</span><a class="ptype lnk" href="#obj-cpi">Credit Party Identifier</a><span class="req">필수</span></div><div class="pdesc">수취 계좌/지갑 식별자.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">sender</span><a class="ptype lnk" href="#obj-sender">Sender</a><span class="cond">C2C·C2B 필수</span></div><div class="pdesc">송금인. 거래유형에 따라 필수.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">beneficiary</span><a class="ptype lnk" href="#obj-beneficiary">Beneficiary</a><span class="cond">C2C·B2C 필수</span></div><div class="pdesc">수취인. 거래유형에 따라 필수.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">sending_business</span><span class="ptype">Object</span><span class="cond">B2C·B2B 필수</span></div><div class="pdesc">송금 사업자(C2C 미사용).</div></div>
+          <div class="param"><div class="param-row"><span class="pname">receiving_business</span><span class="ptype">Object</span><span class="cond">C2B·B2B 필수</span></div><div class="pdesc">수취 사업자(C2C 미사용).</div></div>
+          <div class="param"><div class="param-row"><span class="pname">external_id</span><span class="ptype">String</span><span class="req">필수</span><span class="max">64</span></div><div class="pdesc">외부 참조 ID(멱등).</div></div>
+          <div class="param"><div class="param-row"><span class="pname">purpose_of_remittance</span><span class="ptype">String</span><span class="req">필수</span><span class="max">64</span></div><div class="pdesc">송금 목적값. 예 <code>FAMILY_SUPPORT</code>. (허용값은 payer 의 <code>purpose_of_remittance_values_accepted</code> 로 제한될 수 있음)</div></div>
+          <div class="param"><div class="param-row"><span class="pname">document_reference_number</span><span class="ptype">String</span><span class="cond">B2B 필수</span><span class="max">64</span></div><div class="pdesc">관련 증빙 문서 참조번호.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">external_code</span><span class="ptype">String</span><span class="opt">선택</span><span class="max">64</span></div><div class="pdesc">외부 참조 코드.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">callback_url</span><span class="ptype">String</span><span class="opt">선택</span></div><div class="pdesc">콜백 알림 URL.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">retail_fee</span><span class="ptype">Decimal</span><span class="opt">선택</span></div><div class="pdesc">파트너 부과 리테일 수수료.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">retail_fee_currency</span><span class="ptype">String</span><span class="opt">선택</span><span class="max">3</span></div><div class="pdesc">리테일 수수료 통화(ISO 4217).</div></div>
+          <div class="param"><div class="param-row"><span class="pname">additional_information_1~3</span><span class="ptype">String</span><span class="opt">선택</span><span class="max">64</span></div><div class="pdesc">부가 정보.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">reference</span><span class="ptype">String</span><span class="opt">선택</span><span class="max">16</span></div><div class="pdesc">수취 명세서 표기 참조값.</div></div>
+          <h3 class="sec">Response · 201</h3>
+          <div class="param"><div class="param-row"><span class="pname">(반환)</span><a class="ptype lnk" href="#obj-transaction">Transaction</a></div><div class="pdesc"><code>status=10000</code> (CREATED).</div></div>
+          <div class="warn"><b>생성 ≠ 송금.</b> 자금은 <b>확정(confirm)</b> 시 hold·디스패치됩니다.</div>
+        </div>
+        <div class="samples">
+          <div class="sample"><div class="sample-bar"><span class="dot">요청</span><span class="st crt">POST</span></div>
+<pre><span class="k">POST</span> /v2/money-transfer/quotations/1/transactions
+{
+  <span class="k">"credit_party_identifier"</span>: { <span class="k">"bank_account_number"</span>: <span class="s">"0123456789"</span> },
+  <span class="k">"sender"</span>: {
+    <span class="k">"firstname"</span>: <span class="s">"John"</span>, <span class="k">"lastname"</span>: <span class="s">"Doe"</span>,
+    <span class="k">"country_iso_code"</span>: <span class="s">"SGP"</span>,
+    <span class="k">"id_type"</span>: <span class="s">"PASSPORT"</span>, <span class="k">"id_number"</span>: <span class="s">"S1234567A"</span>
+  },
+  <span class="k">"beneficiary"</span>: { <span class="k">"firstname"</span>: <span class="s">"Jane"</span>, <span class="k">"lastname"</span>: <span class="s">"Doe"</span> },
+  <span class="k">"external_id"</span>: <span class="s">"1478078339357"</span>,
+  <span class="k">"purpose_of_remittance"</span>: <span class="s">"FAMILY_SUPPORT"</span>,
+  <span class="k">"callback_url"</span>: <span class="s">"https://api.hecto.example/thunes/callback"</span>
+}</pre></div>
+          <div class="sample"><div class="sample-bar"><span class="dot">응답</span><span class="st crt">201 Created</span></div>
+<pre>{
+  <span class="k">"id"</span>: <span class="n">1</span>,
+  <span class="k">"status"</span>: <span class="s">"10000"</span>, <span class="k">"status_message"</span>: <span class="s">"CREATED"</span>, <span class="k">"status_class"</span>: <span class="s">"1"</span>,
+  <span class="k">"external_id"</span>: <span class="s">"1478078339357"</span>,
+  <span class="k">"transaction_type"</span>: <span class="s">"C2C"</span>,
+  <span class="k">"sent_amount"</span>: { <span class="k">"currency"</span>: <span class="s">"SGD"</span>, <span class="k">"amount"</span>: <span class="n">10</span> },
+  <span class="k">"fee"</span>: { <span class="k">"currency"</span>: <span class="s">"SGD"</span>, <span class="k">"amount"</span>: <span class="n">1.0</span> },
+  <span class="k">"purpose_of_remittance"</span>: <span class="s">"FAMILY_SUPPORT"</span>
+}</pre></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 거래 확정 ============ -->
+    <section class="ep" id="transaction-confirm">
+      <div class="ep-grid">
+        <div class="doc">
+          <h2 class="title">거래 확정</h2>
+          <p class="sub"><b>요청 바디 없음.</b> 확정 시 source 금액 hold + 지급망 디스패치, 상태 <code>CONFIRMED(20000)</code>.</p>
+          <div class="ep-line"><span class="method post">POST</span><span class="url">/v2/money-transfer/transactions/{id}/confirm</span></div>
+          <div class="ep-line"><span class="method post">POST</span><span class="url">/v2/money-transfer/transactions/ext-{external_id}/confirm</span></div>
+          <h3 class="sec">Path</h3>
+          <div class="param"><div class="param-row"><span class="pname">id</span><span class="ptype">Integer</span><span class="req">필수</span></div><div class="pdesc">거래 ID.</div></div>
+          <h3 class="sec">Response · 200</h3>
+          <div class="param"><div class="param-row"><span class="pname">(반환)</span><a class="ptype lnk" href="#obj-transaction">Transaction</a></div><div class="pdesc"><code>status=20000</code>. 이후 최종 상태는 콜백/폴링.</div></div>
+          <div class="warn"><b>주요 에러</b> — <code>1007002</code> 이미 확정 · <code>1007004</code> 견적 만료 · <code>1007005</code> 잔액 부족.</div>
+        </div>
+        <div class="samples">
+          <div class="sample"><div class="sample-bar"><span class="dot">요청</span><span class="st crt">POST</span></div>
+<pre><span class="k">POST</span> /v2/money-transfer/transactions/1/confirm
+<span class="c"># 바디 없음</span></pre></div>
+          <div class="sample"><div class="sample-bar"><span class="dot">응답</span><span class="st ok">200 OK</span></div>
+<pre>{
+  <span class="k">"id"</span>: <span class="n">1</span>,
+  <span class="k">"status"</span>: <span class="s">"20000"</span>, <span class="k">"status_message"</span>: <span class="s">"CONFIRMED"</span>, <span class="k">"status_class"</span>: <span class="s">"2"</span>,
+  <span class="k">"external_id"</span>: <span class="s">"1478078339357"</span>
+}</pre></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 거래 조회 ============ -->
+    <section class="ep" id="transaction-get">
+      <div class="ep-grid">
+        <div class="doc">
+          <h2 class="title">거래 조회</h2>
+          <p class="sub">거래 ID 또는 <code>external_id</code> 로 현재 상태를 조회. 콜백 누락 시 진실 확인 경로.</p>
+          <div class="ep-line"><span class="method get">GET</span><span class="url">/v2/money-transfer/transactions/{id}</span></div>
+          <div class="ep-line"><span class="method get">GET</span><span class="url">/v2/money-transfer/transactions/ext-{external_id}</span></div>
+          <h3 class="sec">Path</h3>
+          <div class="param"><div class="param-row"><span class="pname">id</span><span class="ptype">Integer</span><span class="req">필수</span></div><div class="pdesc">거래 ID.</div></div>
+          <h3 class="sec">Response · 200</h3>
+          <div class="param"><div class="param-row"><span class="pname">(반환)</span><a class="ptype lnk" href="#obj-transaction">Transaction</a></div><div class="pdesc">예: <code>status=50000</code> (SUBMITTED).</div></div>
+        </div>
+        <div class="samples">
+          <div class="sample"><div class="sample-bar"><span class="dot">요청</span><span class="st ok">GET</span></div>
+<pre><span class="k">GET</span> /v2/money-transfer/transactions/1
+<span class="c"># 또는</span>
+<span class="k">GET</span> /v2/money-transfer/transactions/ext-1478078339357</pre></div>
+          <div class="sample"><div class="sample-bar"><span class="dot">응답</span><span class="st ok">200 OK</span></div>
+<pre>{
+  <span class="k">"id"</span>: <span class="n">1</span>,
+  <span class="k">"status"</span>: <span class="s">"50000"</span>, <span class="k">"status_message"</span>: <span class="s">"SUBMITTED"</span>, <span class="k">"status_class"</span>: <span class="s">"5"</span>,
+  <span class="k">"external_id"</span>: <span class="s">"1478078339357"</span>,
+  <span class="k">"payer_transaction_reference"</span>: <span class="s">"SP-000-123"</span>,
+  <span class="k">"destination"</span>: { <span class="k">"currency"</span>: <span class="s">"IDR"</span>, <span class="k">"amount"</span>: <span class="n">110000</span> }
+}</pre></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 거래 취소 ============ -->
+    <section class="ep" id="transaction-cancel">
+      <div class="ep-grid">
+        <div class="doc">
+          <h2 class="title">거래 취소</h2>
+          <p class="sub"><b>요청 바디 없음.</b> <code>CREATED</code> 또는 <code>CONFIRMED-WAITING-FOR-PICKUP</code> 에서만 가능.</p>
+          <div class="ep-line"><span class="method post">POST</span><span class="url">/v2/money-transfer/transactions/{id}/cancel</span></div>
+          <h3 class="sec">Path</h3>
+          <div class="param"><div class="param-row"><span class="pname">id</span><span class="ptype">Integer</span><span class="req">필수</span></div><div class="pdesc">거래 ID.</div></div>
+          <h3 class="sec">Response · 200</h3>
+          <div class="param"><div class="param-row"><span class="pname">(반환)</span><a class="ptype lnk" href="#obj-transaction">Transaction</a></div><div class="pdesc"><code>status=40000</code> (CANCELLED).</div></div>
+          <div class="warn">취소 불가 상태 호출 시 <code>1007014</code>. SUBMITTED 이후 reversal/cancel 은 Thunes 고객지원팀 경유.</div>
+        </div>
+        <div class="samples">
+          <div class="sample"><div class="sample-bar"><span class="dot">요청</span><span class="st crt">POST</span></div>
+<pre><span class="k">POST</span> /v2/money-transfer/transactions/1/cancel
+<span class="c"># 바디 없음</span></pre></div>
+          <div class="sample"><div class="sample-bar"><span class="dot">응답</span><span class="st ok">200 OK</span></div>
+<pre>{
+  <span class="k">"id"</span>: <span class="n">1</span>,
+  <span class="k">"status"</span>: <span class="s">"40000"</span>, <span class="k">"status_message"</span>: <span class="s">"CANCELLED"</span>, <span class="k">"status_class"</span>: <span class="s">"4"</span>
+}</pre></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= OBJECTS ================= -->
+    <div class="group-head">
+      <h2>Objects · 객체 레퍼런스</h2>
+      <p>요청·응답에서 <span class="ptype" style="color:var(--o-60)">Object</span> 타입으로 참조되는 객체들의 예제와 필드 상세.</p>
+    </div>
+
+    <!-- Quotation -->
+    <section class="ep" id="obj-quotation">
+      <div class="ep-grid">
+        <div class="doc">
+          <h2 class="title">Quotation</h2>
+          <p class="sub">견적 객체. 견적 생성·조회의 응답.</p>
+          <div class="ep-line"><span class="tag-obj">OBJECT</span></div>
+          <h3 class="sec">Fields</h3>
+          <div class="param"><div class="param-row"><span class="pname">id</span><span class="ptype">Integer(64)</span></div><div class="pdesc">견적 ID.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">external_id</span><span class="ptype">String</span></div><div class="pdesc">요청값 에코.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">payer</span><a class="ptype lnk" href="#obj-payer">Payer</a></div><div class="pdesc">지급처 정보.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">mode / transaction_type</span><span class="ptype">String</span></div><div class="pdesc">모드 / 거래유형.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">source</span><a class="ptype lnk" href="#obj-source">Source</a></div><div class="pdesc">보낼 금액.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">destination</span><a class="ptype lnk" href="#obj-destination">Destination</a></div><div class="pdesc">받을(계산) 금액.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">sent_amount</span><a class="ptype lnk" href="#obj-money">Amount</a></div><div class="pdesc">실제 보낼 금액.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">wholesale_fx_rate</span><span class="ptype">Decimal</span></div><div class="pdesc">도매 환율(견적 동안 고정).</div></div>
+          <div class="param"><div class="param-row"><span class="pname">fee</span><a class="ptype lnk" href="#obj-money">Amount</a></div><div class="pdesc">Thunes 수수료.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">creation_date / expiration_date</span><span class="ptype">DateTime</span></div><div class="pdesc">생성 / 만료 시각 — 만료 내 confirm.</div></div>
+        </div>
+        <div class="samples"><div class="sample"><div class="sample-bar"><span class="dot">예제</span><span class="st obj">Quotation</span></div>
+<pre>{
+  <span class="k">"id"</span>: <span class="n">1</span>,
+  <span class="k">"external_id"</span>: <span class="s">"9481184321482"</span>,
+  <span class="k">"payer"</span>: { <span class="k">"id"</span>: <span class="n">214</span>, <span class="k">"name"</span>: <span class="s">"Bank Rakyat Indonesia"</span>, <span class="k">"currency"</span>: <span class="s">"IDR"</span> },
+  <span class="k">"mode"</span>: <span class="s">"SOURCE_AMOUNT"</span>,
+  <span class="k">"transaction_type"</span>: <span class="s">"C2C"</span>,
+  <span class="k">"source"</span>: { <span class="k">"country_iso_code"</span>: <span class="s">"SGP"</span>, <span class="k">"currency"</span>: <span class="s">"SGD"</span>, <span class="k">"amount"</span>: <span class="n">10</span> },
+  <span class="k">"destination"</span>: { <span class="k">"currency"</span>: <span class="s">"IDR"</span>, <span class="k">"amount"</span>: <span class="n">110000</span> },
+  <span class="k">"sent_amount"</span>: { <span class="k">"currency"</span>: <span class="s">"SGD"</span>, <span class="k">"amount"</span>: <span class="n">10</span> },
+  <span class="k">"wholesale_fx_rate"</span>: <span class="n">11000.0</span>,
+  <span class="k">"fee"</span>: { <span class="k">"currency"</span>: <span class="s">"SGD"</span>, <span class="k">"amount"</span>: <span class="n">1.0</span> },
+  <span class="k">"creation_date"</span>: <span class="s">"2024-01-02T09:07:44Z"</span>,
+  <span class="k">"expiration_date"</span>: <span class="s">"2024-01-03T09:07:44Z"</span>
+}</pre></div></div>
+      </div>
+    </section>
+
+    <!-- Transaction -->
+    <section class="ep" id="obj-transaction">
+      <div class="ep-grid">
+        <div class="doc">
+          <h2 class="title">Transaction</h2>
+          <p class="sub">거래 객체. 거래 생성·확정·조회·취소의 응답.</p>
+          <div class="ep-line"><span class="tag-obj">OBJECT</span></div>
+          <h3 class="sec">Fields</h3>
+          <div class="param"><div class="param-row"><span class="pname">id</span><span class="ptype">Integer(64)</span></div><div class="pdesc">거래 ID.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">status / status_message</span><span class="ptype">String</span></div><div class="pdesc">상태 코드(10000) / 설명(CREATED).</div></div>
+          <div class="param"><div class="param-row"><span class="pname">status_class / status_class_message</span><span class="ptype">String</span></div><div class="pdesc">상태 클래스(1~7) / 설명.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">external_id / external_code</span><span class="ptype">String</span></div><div class="pdesc">우리 참조 ID / 코드.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">transaction_type</span><span class="ptype">String</span></div><div class="pdesc">거래 유형.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">payer_transaction_reference / _code</span><span class="ptype">String</span></div><div class="pdesc">지급처 거래 참조 / 코드.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">creation_date / expiration_date</span><span class="ptype">String</span></div><div class="pdesc">생성 / 만료 시각.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">credit_party_identifier</span><a class="ptype lnk" href="#obj-cpi">Credit Party Identifier</a></div><div class="pdesc">수취 식별자.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">source / destination</span><a class="ptype lnk" href="#obj-source">Source</a> <a class="ptype lnk" href="#obj-destination">Destination</a></div><div class="pdesc">금액 객체.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">payer</span><a class="ptype lnk" href="#obj-payer">Payer</a></div><div class="pdesc">지급처.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">sender</span><a class="ptype lnk" href="#obj-sender">Sender</a></div><div class="pdesc">송금인.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">beneficiary</span><a class="ptype lnk" href="#obj-beneficiary">Beneficiary</a></div><div class="pdesc">수취인.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">sent_amount / fee</span><a class="ptype lnk" href="#obj-money">Amount</a></div><div class="pdesc">실제 보낸 금액 / 수수료.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">wholesale_fx_rate / retail_rate / retail_fee / retail_fee_currency</span><span class="ptype">Decimal/String</span></div><div class="pdesc">도매 환율 / 리테일 환율 / 리테일 수수료 / 통화.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">callback_url</span><span class="ptype">String</span></div><div class="pdesc">콜백 URL(요청값 에코).</div></div>
+          <div class="param"><div class="param-row"><span class="pname">purpose_of_remittance</span><span class="ptype">String</span></div><div class="pdesc">송금 목적.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">document_reference_number</span><span class="ptype">String</span></div><div class="pdesc">증빙 문서 참조번호(B2B).</div></div>
+          <div class="param"><div class="param-row"><span class="pname">additional_information_1~3 / reference</span><span class="ptype">String</span></div><div class="pdesc">부가 정보 / 명세서 표기값.</div></div>
+        </div>
+        <div class="samples"><div class="sample"><div class="sample-bar"><span class="dot">예제</span><span class="st obj">Transaction</span></div>
+<pre>{
+  <span class="k">"id"</span>: <span class="n">1</span>,
+  <span class="k">"status"</span>: <span class="s">"10000"</span>, <span class="k">"status_message"</span>: <span class="s">"CREATED"</span>,
+  <span class="k">"status_class"</span>: <span class="s">"1"</span>, <span class="k">"status_class_message"</span>: <span class="s">"CREATED"</span>,
+  <span class="k">"external_id"</span>: <span class="s">"1478078339357"</span>,
+  <span class="k">"transaction_type"</span>: <span class="s">"C2C"</span>,
+  <span class="k">"credit_party_identifier"</span>: { <span class="k">"bank_account_number"</span>: <span class="s">"0123456789"</span> },
+  <span class="k">"source"</span>: { <span class="k">"currency"</span>: <span class="s">"SGD"</span>, <span class="k">"amount"</span>: <span class="n">10</span> },
+  <span class="k">"destination"</span>: { <span class="k">"currency"</span>: <span class="s">"IDR"</span>, <span class="k">"amount"</span>: <span class="n">110000</span> },
+  <span class="k">"sender"</span>: { <span class="k">"firstname"</span>: <span class="s">"John"</span>, <span class="k">"lastname"</span>: <span class="s">"Doe"</span> },
+  <span class="k">"beneficiary"</span>: { <span class="k">"firstname"</span>: <span class="s">"Jane"</span>, <span class="k">"lastname"</span>: <span class="s">"Doe"</span> },
+  <span class="k">"sent_amount"</span>: { <span class="k">"currency"</span>: <span class="s">"SGD"</span>, <span class="k">"amount"</span>: <span class="n">10</span> },
+  <span class="k">"fee"</span>: { <span class="k">"currency"</span>: <span class="s">"SGD"</span>, <span class="k">"amount"</span>: <span class="n">1.0</span> },
+  <span class="k">"wholesale_fx_rate"</span>: <span class="n">11000.0</span>,
+  <span class="k">"purpose_of_remittance"</span>: <span class="s">"FAMILY_SUPPORT"</span>
+}</pre></div></div>
+      </div>
+    </section>
+
+    <!-- Payer -->
+    <section class="ep" id="obj-payer">
+      <div class="ep-grid">
+        <div class="doc">
+          <h2 class="title">Payer</h2>
+          <p class="sub">지급처 객체. 금액·필수필드 규칙은 <code>transaction_types[유형]</code> 안에 있음.</p>
+          <div class="ep-line"><span class="tag-obj">OBJECT</span></div>
+          <h3 class="sec">Fields</h3>
+          <div class="param"><div class="param-row"><span class="pname">id</span><span class="ptype">Integer</span></div><div class="pdesc">지급처 ID (= 견적 <code>payer_id</code>).</div></div>
+          <div class="param"><div class="param-row"><span class="pname">name</span><span class="ptype">String</span></div><div class="pdesc">지급처(은행/월렛) 이름.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">precision</span><span class="ptype">Integer</span></div><div class="pdesc">금액 소수 자릿수 (THB=2, IDR=0).</div></div>
+          <div class="param"><div class="param-row"><span class="pname">increment</span><span class="ptype">Decimal</span></div><div class="pdesc">금액 최소 단위(배수만 허용).</div></div>
+          <div class="param"><div class="param-row"><span class="pname">currency / country_iso_code</span><span class="ptype">String</span></div><div class="pdesc">지급 통화 / 국가.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">service</span><a class="ptype lnk" href="#obj-service">Service</a></div><div class="pdesc">지급 수단 객체 <code>{id, name}</code>.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">transaction_types</span><span class="ptype">Object</span></div><div class="pdesc">거래유형(<code>C2C</code>·<code>C2B</code>·<code>B2C</code>·<code>B2B</code>) 키를 갖는 맵. 각 유형 안에 금액·필수필드 규칙이 들어있다 — <b>이 객체가 요구사항의 단일 출처</b>.</div>
+            <div class="nest">
+              <div class="param"><div class="param-row"><span class="pname">minimum_transaction_amount</span><span class="ptype">Decimal</span></div><div class="pdesc">최소 거래 금액.</div></div>
+              <div class="param"><div class="param-row"><span class="pname">maximum_transaction_amount</span><span class="ptype">Decimal | null</span></div><div class="pdesc">최대 거래 금액(null = 무제한).</div></div>
+              <div class="param"><div class="param-row"><span class="pname">credit_party_identifiers_accepted</span><span class="ptype">Array[Array]</span></div><div class="pdesc">허용 수취 식별자 조합. 예 <code>[["bank_account_number"]]</code>.</div></div>
+              <div class="param"><div class="param-row"><span class="pname">required_sending_entity_fields</span><span class="ptype">Array[Array]</span></div><div class="pdesc">송금인 필수 필드 조합(택1).</div></div>
+              <div class="param"><div class="param-row"><span class="pname">required_receiving_entity_fields</span><span class="ptype">Array[Array]</span></div><div class="pdesc">수취인 필수 필드 조합(택1).</div></div>
+              <div class="param"><div class="param-row"><span class="pname">required_documents</span><span class="ptype">Array[Array]</span></div><div class="pdesc">필요 증빙 문서 조합(<code>[[]]</code> = 불필요).</div></div>
+              <div class="param"><div class="param-row"><span class="pname">credit_party_information</span><span class="ptype">Object</span></div><div class="pdesc">CPI 가용 식별자: <code>{credit_party_identifiers_accepted}</code>.</div></div>
+              <div class="param"><div class="param-row"><span class="pname">credit_party_verification</span><span class="ptype">Object</span></div><div class="pdesc">CPV 가용: <code>{credit_party_identifiers_accepted, required_receiving_entity_fields}</code>.</div></div>
+              <div class="param"><div class="param-row"><span class="pname">purpose_of_remittance_values_accepted</span><span class="ptype">Array</span></div><div class="pdesc">허용 송금목적 값(<code>[]</code> = 제약 없음).</div></div>
+            </div>
+          </div>
+          <div class="note"><b>조합 우선순위(docs):</b> <code>credit_party_identifiers_accepted</code>·<code>required_sending/receiving_entity_fields</code> 가 여러 조합이면 <b>목록의 첫 조합이 preferred</b> 이며 우선 사용해야 한다. <span style="color:var(--t4)">실측 응답에서 금액이 문자열(<code>"50.00000000"</code>)로 직렬화되어 내려온 사례 있음 — 파싱 주의.</span></div>
+        </div>
+        <div class="samples"><div class="sample"><div class="sample-bar"><span class="dot">예제</span><span class="st obj">Payer</span></div>
+<pre>{
+  <span class="k">"id"</span>: <span class="n">214</span>, <span class="k">"name"</span>: <span class="s">"Bank Rakyat Indonesia (BRI)"</span>,
+  <span class="k">"country_iso_code"</span>: <span class="s">"IDN"</span>, <span class="k">"currency"</span>: <span class="s">"IDR"</span>,
+  <span class="k">"precision"</span>: <span class="n">0</span>, <span class="k">"increment"</span>: <span class="n">1</span>,
+  <span class="k">"service"</span>: { <span class="k">"id"</span>: <span class="n">2</span>, <span class="k">"name"</span>: <span class="s">"BankAccount"</span> },
+  <span class="k">"transaction_types"</span>: {
+    <span class="k">"C2C"</span>: {
+      <span class="k">"minimum_transaction_amount"</span>: <span class="s">"10000.00000000"</span>,
+      <span class="k">"maximum_transaction_amount"</span>: <span class="s">"2000000000.00000000"</span>,
+      <span class="k">"credit_party_identifiers_accepted"</span>: [ [<span class="s">"bank_account_number"</span>] ],
+      <span class="k">"required_sending_entity_fields"</span>: [ [<span class="s">"lastname"</span>] ],
+      <span class="k">"required_receiving_entity_fields"</span>: [ [<span class="s">"lastname"</span>] ],
+      <span class="k">"credit_party_verification"</span>: {
+        <span class="k">"credit_party_identifiers_accepted"</span>: [ [<span class="s">"bank_account_number"</span>] ]
+      }
+    }
+  }
+}</pre></div></div>
+      </div>
+    </section>
+
+    <!-- Service -->
+    <section class="ep" id="obj-service">
+      <div class="ep-grid">
+        <div class="doc">
+          <h2 class="title">Service</h2>
+          <p class="sub">지급 수단(서비스) 객체. payer 가 어떤 지급 채널인지 나타낸다.</p>
+          <div class="ep-line"><span class="tag-obj">OBJECT</span></div>
+          <h3 class="sec">Fields</h3>
+          <div class="param"><div class="param-row"><span class="pname">id</span><span class="ptype">Integer</span></div><div class="pdesc">서비스 ID.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">name</span><span class="ptype">String</span></div><div class="pdesc">서비스 이름.</div></div>
+          <div class="note">V2 docs 에 등장하는 서비스 이름: <code>MobileWallet</code> · <code>BankAccount</code> · <code>CashPickup</code> · <code>Card</code> · <code>HomeDelivery</code> · <code>DigitalAssetWallet</code>. <span style="color:var(--t4)">(id↔name 고정 매핑은 V2 docs 미명시 — 실제 값은 Services 조회로 확인)</span></div>
+        </div>
+        <div class="samples"><div class="sample"><div class="sample-bar"><span class="dot">예제</span><span class="st obj">Service</span></div>
+<pre>{
+  <span class="k">"id"</span>: <span class="n">2</span>,
+  <span class="k">"name"</span>: <span class="s">"BankAccount"</span>
+}</pre></div></div>
+      </div>
+    </section>
+
+    <!-- Source -->
+    <section class="ep" id="obj-source">
+      <div class="ep-grid">
+        <div class="doc">
+          <h2 class="title">Source</h2>
+          <p class="sub">보내는(출발) 금액 객체.</p>
+          <div class="ep-line"><span class="tag-obj">OBJECT</span></div>
+          <h3 class="sec">Fields</h3>
+          <div class="param"><div class="param-row"><span class="pname">country_iso_code</span><span class="ptype">String</span><span class="req">필수</span><span class="max">3</span></div><div class="pdesc">출발 국가 (ISO 3166-1 alpha-3).</div></div>
+          <div class="param"><div class="param-row"><span class="pname">currency</span><span class="ptype">String</span><span class="req">필수</span><span class="max">3</span></div><div class="pdesc">출발 통화 (ISO 4217).</div></div>
+          <div class="param"><div class="param-row"><span class="pname">amount</span><span class="ptype">Decimal</span><span class="cond">조건부</span></div><div class="pdesc"><code>mode=SOURCE_AMOUNT</code> 일 때 필수, 아니면 <code>null</code>.</div></div>
+        </div>
+        <div class="samples"><div class="sample"><div class="sample-bar"><span class="dot">예제</span><span class="st obj">Source</span></div>
+<pre>{
+  <span class="k">"country_iso_code"</span>: <span class="s">"SGP"</span>,
+  <span class="k">"currency"</span>: <span class="s">"SGD"</span>,
+  <span class="k">"amount"</span>: <span class="n">10</span>
+}</pre></div></div>
+      </div>
+    </section>
+
+    <!-- Destination -->
+    <section class="ep" id="obj-destination">
+      <div class="ep-grid">
+        <div class="doc">
+          <h2 class="title">Destination</h2>
+          <p class="sub">받는(도착) 금액 객체.</p>
+          <div class="ep-line"><span class="tag-obj">OBJECT</span></div>
+          <h3 class="sec">Fields</h3>
+          <div class="param"><div class="param-row"><span class="pname">currency</span><span class="ptype">String</span><span class="req">필수</span><span class="max">3</span></div><div class="pdesc">도착(수취) 통화 (ISO 4217).</div></div>
+          <div class="param"><div class="param-row"><span class="pname">amount</span><span class="ptype">Decimal</span><span class="cond">조건부</span></div><div class="pdesc"><code>mode=DESTINATION_AMOUNT</code> 일 때 필수, 아니면 <code>null</code>.</div></div>
+        </div>
+        <div class="samples"><div class="sample"><div class="sample-bar"><span class="dot">예제</span><span class="st obj">Destination</span></div>
+<pre>{
+  <span class="k">"currency"</span>: <span class="s">"IDR"</span>,
+  <span class="k">"amount"</span>: <span class="n">110000</span>
+}</pre></div></div>
+      </div>
+    </section>
+
+    <!-- Amount / Money -->
+    <section class="ep" id="obj-money">
+      <div class="ep-grid">
+        <div class="doc">
+          <h2 class="title">Amount <span style="color:var(--t3);font-weight:400;font-size:14px">— sent_amount · fee</span></h2>
+          <p class="sub">통화·금액만 갖는 금액 객체. <code>sent_amount</code>, <code>fee</code> 가 이 형태.</p>
+          <div class="ep-line"><span class="tag-obj">OBJECT</span></div>
+          <h3 class="sec">Fields</h3>
+          <div class="param"><div class="param-row"><span class="pname">currency</span><span class="ptype">String</span><span class="max">3</span></div><div class="pdesc">통화 (ISO 4217).</div></div>
+          <div class="param"><div class="param-row"><span class="pname">amount</span><span class="ptype">Number</span></div><div class="pdesc">금액 값.</div></div>
+        </div>
+        <div class="samples"><div class="sample"><div class="sample-bar"><span class="dot">예제</span><span class="st obj">Amount</span></div>
+<pre>{
+  <span class="k">"currency"</span>: <span class="s">"SGD"</span>,
+  <span class="k">"amount"</span>: <span class="n">1.0</span>
+}</pre></div></div>
+      </div>
+    </section>
+
+    <!-- Credit Party Identifier -->
+    <section class="ep" id="obj-cpi">
+      <div class="ep-grid">
+        <div class="doc">
+          <h2 class="title">Credit Party Identifier</h2>
+          <p class="sub">수취인 식별자. <b>V2 docs 는 이 객체의 전체 필드 스키마·max length 를 명시하지 않는다.</b> 허용 식별자 조합은 payer 의 <code>credit_party_identifiers_accepted</code> 로 제공되며 그 조합에 맞춰 채운다.</p>
+          <div class="ep-line"><span class="tag-obj">OBJECT</span></div>
+          <h3 class="sec">Fields</h3>
+          <div class="note"><b>V2 docs 가 직접 제시하는 필드는 예시 3개</b>(<code>msisdn</code>·<code>bank_account_number</code>·<code>swift_bic_code</code>)뿐이다. 아래 그 외 식별자는 통화권별 참고 목록(V2 docs 미열거)이며, 실제 사용 가능 여부는 payer 응답 기준.</div>
+          <div class="param"><div class="param-row"><span class="pname">msisdn</span><span class="ptype">String</span><span class="cond">docs 예시</span></div><div class="pdesc">휴대폰 번호(국제형식) — 모바일월렛.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">bank_account_number</span><span class="ptype">String</span><span class="cond">docs 예시</span></div><div class="pdesc">은행 계좌번호.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">swift_bic_code</span><span class="ptype">String</span><span class="cond">docs 예시</span></div><div class="pdesc">SWIFT/BIC 코드.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">iban / clabe / cbu / cbu_alias</span><span class="ptype">String</span><span class="opt">참고</span></div><div class="pdesc">IBAN / 멕시코 CLABE / 아르헨티나 CBU / 별칭. <span style="color:var(--t4)">(V2 docs 미열거)</span></div></div>
+          <div class="param"><div class="param-row"><span class="pname">bik_code / ifs_code / sort_code</span><span class="ptype">String</span><span class="opt">참고</span></div><div class="pdesc">러시아 BIK / 인도 IFSC / 영국 sort code.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">aba_routing_number / bsb_number / branch_number / routing_code</span><span class="ptype">String</span><span class="opt">참고</span></div><div class="pdesc">미국 ABA / 호주 BSB / 지점번호 / 라우팅 코드.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">account_type / account_number / entity_tt_id</span><span class="ptype">String</span><span class="opt">참고</span></div><div class="pdesc">계좌유형 / 계좌번호 / Entity TT ID.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">email / card_number / qr_code</span><span class="ptype">String</span><span class="opt">참고</span></div><div class="pdesc">이메일 / 카드번호 / QR 코드.</div></div>
+        </div>
+        <div class="samples"><div class="sample"><div class="sample-bar"><span class="dot">예제</span><span class="st obj">Credit Party Identifier</span></div>
+<pre>{
+  <span class="k">"msisdn"</span>: <span class="s">"+263775892100"</span>,
+  <span class="k">"bank_account_number"</span>: <span class="s">"0123456789"</span>,
+  <span class="k">"swift_bic_code"</span>: <span class="s">"ABCDEFGH"</span>
+}</pre></div></div>
+      </div>
+    </section>
+
+    <!-- Sender -->
+    <section class="ep" id="obj-sender">
+      <div class="ep-grid">
+        <div class="doc">
+          <h2 class="title">Sender</h2>
+          <p class="sub">송금인 객체. <code>C2C</code>·<code>C2B</code> 거래에서 객체 자체가 필수. 아래 <span class="cond">필수†</span> 는 V2 docs 표기(sender 가 필요한 경우)이며, <b>실제 필수 필드는 payer 의 <code>required_sending_entity_fields</code> 가 정의</b>한다(클라이언트는 payer 응답으로 판단).</p>
+          <div class="ep-line"><span class="tag-obj">OBJECT</span></div>
+          <h3 class="sec">Fields <span style="color:var(--t4);font-weight:400">— V2 docs 기준 · max length 미기재</span></h3>
+          <div class="note">† = V2 docs 가 <b>"Yes (when sender required)"</b> 로 표기한 필드(sender 객체가 필요한 거래에서 필수). 단 payer 의 <code>required_sending_entity_fields</code>(조합 배열) 가 최종 기준이며, 실제 payer 응답이 <code>[["lastname", …]]</code> 처럼 다른 조합으로 내려올 수 있다. V2 docs 는 sender 필드의 max length 를 명시하지 않는다.</div>
+          <div class="param"><div class="param-row"><span class="pname">firstname / lastname</span><span class="ptype">String</span><span class="cond">필수†</span></div><div class="pdesc">이름 / 성.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">nationality_country_iso_code</span><span class="ptype">String</span><span class="cond">필수†</span></div><div class="pdesc">국적(alpha-3).</div></div>
+          <div class="param"><div class="param-row"><span class="pname">date_of_birth / country_of_birth_iso_code</span><span class="ptype">Date/String</span><span class="cond">필수†</span></div><div class="pdesc">생년월일(ISO 8601) / 출생국.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">gender</span><span class="ptype">String</span><span class="cond">필수†</span></div><div class="pdesc">MALE·FEMALE.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">address / postal_code / city</span><span class="ptype">String</span><span class="cond">필수†</span></div><div class="pdesc">주소 / 우편번호 / 도시.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">country_iso_code</span><span class="ptype">String</span><span class="cond">필수†</span></div><div class="pdesc">주소 국가(alpha-3).</div></div>
+          <div class="param"><div class="param-row"><span class="pname">id_type / id_number</span><span class="ptype">String</span><span class="cond">필수†</span></div><div class="pdesc">신분증 종류(enum) / 번호.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">lastname2 / middlename / nativename</span><span class="ptype">String</span><span class="opt">선택</span></div><div class="pdesc">추가 성 / 중간이름 / 현지문자 전체명.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">msisdn / email</span><span class="ptype">String</span><span class="opt">선택</span></div><div class="pdesc">휴대폰 / 이메일.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">id_country_iso_code / id_delivery_date / id_expiration_date</span><span class="ptype">String/Date</span><span class="opt">선택</span></div><div class="pdesc">신분증 발급국 / 발급일 / 만료일.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">occupation / province_state / code</span><span class="ptype">String</span><span class="opt">선택</span></div><div class="pdesc">직업 / 시·도 / 내부 참조 코드.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">beneficiary_relationship / source_of_funds</span><span class="ptype">String</span><span class="opt">선택</span></div><div class="pdesc">수취인과의 관계(enum) / 자금 출처(enum).</div></div>
+          <div class="param"><div class="param-row"><span class="pname">bank_account_number</span><span class="ptype">String</span><span class="opt">선택</span></div><div class="pdesc">송금인 계좌번호.</div></div>
+        </div>
+        <div class="samples"><div class="sample"><div class="sample-bar"><span class="dot">예제</span><span class="st obj">Sender</span></div>
+<pre>{
+  <span class="k">"firstname"</span>: <span class="s">"John"</span>, <span class="k">"lastname"</span>: <span class="s">"Doe"</span>,
+  <span class="k">"nationality_country_iso_code"</span>: <span class="s">"SGP"</span>,
+  <span class="k">"date_of_birth"</span>: <span class="s">"1970-01-01"</span>,
+  <span class="k">"gender"</span>: <span class="s">"MALE"</span>,
+  <span class="k">"address"</span>: <span class="s">"1 Marina Blvd"</span>, <span class="k">"city"</span>: <span class="s">"Singapore"</span>,
+  <span class="k">"country_iso_code"</span>: <span class="s">"SGP"</span>,
+  <span class="k">"id_type"</span>: <span class="s">"PASSPORT"</span>, <span class="k">"id_number"</span>: <span class="s">"S1234567A"</span>,
+  <span class="k">"occupation"</span>: <span class="s">"Engineer"</span>
+}</pre></div></div>
+      </div>
+    </section>
+
+    <!-- Beneficiary -->
+    <section class="ep" id="obj-beneficiary">
+      <div class="ep-grid">
+        <div class="doc">
+          <h2 class="title">Beneficiary</h2>
+          <p class="sub">수취인 객체. <code>C2C</code>·<code>B2C</code> 거래에서 객체 자체가 필수. V2 docs 는 <b><code>firstname</code>·<code>lastname</code>·<code>country_iso_code</code> 3개만</b> "Yes (when beneficiary required)" 로 표기하고 나머지는 선택. <b>실제 필수 필드는 payer 의 <code>required_receiving_entity_fields</code> 가 정의</b>한다.</p>
+          <div class="ep-line"><span class="tag-obj">OBJECT</span></div>
+          <h3 class="sec">Fields <span style="color:var(--t4);font-weight:400">— V2 docs 기준 · max length 미기재</span></h3>
+          <div class="note">† = V2 docs 가 "Yes (when beneficiary required)" 로 표기한 필드. 최종 필수 여부는 payer 의 <code>required_receiving_entity_fields</code> 가 결정. V2 docs 는 beneficiary 필드 max length 를 명시하지 않는다.</div>
+          <div class="param"><div class="param-row"><span class="pname">firstname / lastname</span><span class="ptype">String</span><span class="cond">필수†</span></div><div class="pdesc">이름 / 성.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">country_iso_code</span><span class="ptype">String</span><span class="cond">필수†</span></div><div class="pdesc">주소 국가(alpha-3).</div></div>
+          <div class="param"><div class="param-row"><span class="pname">lastname2 / middlename / nativename</span><span class="ptype">String</span><span class="opt">선택</span></div><div class="pdesc">추가성 / 중간이름 / 현지문자명.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">nationality_country_iso_code</span><span class="ptype">String</span><span class="opt">선택</span></div><div class="pdesc">국적(alpha-3).</div></div>
+          <div class="param"><div class="param-row"><span class="pname">date_of_birth / country_of_birth_iso_code</span><span class="ptype">Date/String</span><span class="opt">선택</span></div><div class="pdesc">생년월일(ISO 8601) / 출생국.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">gender</span><span class="ptype">String</span><span class="opt">선택</span></div><div class="pdesc">MALE·FEMALE.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">address / postal_code / city / province_state</span><span class="ptype">String</span><span class="opt">선택</span></div><div class="pdesc">주소 / 우편번호 / 도시 / 시·도.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">msisdn / email</span><span class="ptype">String</span><span class="opt">선택</span></div><div class="pdesc">휴대폰 / 이메일.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">id_type / id_number / id_country_iso_code</span><span class="ptype">String</span><span class="opt">선택</span></div><div class="pdesc">신분증 종류(enum) / 번호 / 발급국.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">id_delivery_date / id_expiration_date</span><span class="ptype">Date</span><span class="opt">선택</span></div><div class="pdesc">발급일 / 만료일(ISO 8601).</div></div>
+          <div class="param"><div class="param-row"><span class="pname">occupation / code</span><span class="ptype">String</span><span class="opt">선택</span></div><div class="pdesc">직업 / 식별 코드.</div></div>
+          <div class="param"><div class="param-row"><span class="pname">bank_account_holder_name</span><span class="ptype">String</span><span class="opt">선택</span></div><div class="pdesc">예금주명.</div></div>
+        </div>
+        <div class="samples"><div class="sample"><div class="sample-bar"><span class="dot">예제</span><span class="st obj">Beneficiary</span></div>
+<pre>{
+  <span class="k">"firstname"</span>: <span class="s">"Jane"</span>, <span class="k">"lastname"</span>: <span class="s">"Doe"</span>,
+  <span class="k">"nationality_country_iso_code"</span>: <span class="s">"IDN"</span>,
+  <span class="k">"date_of_birth"</span>: <span class="s">"1971-01-01"</span>,
+  <span class="k">"gender"</span>: <span class="s">"FEMALE"</span>,
+  <span class="k">"address"</span>: <span class="s">"Jl. Sudirman 1"</span>, <span class="k">"city"</span>: <span class="s">"Jakarta"</span>,
+  <span class="k">"country_iso_code"</span>: <span class="s">"IDN"</span>,
+  <span class="k">"id_type"</span>: <span class="s">"NATIONAL_ID"</span>, <span class="k">"id_number"</span>: <span class="s">"31750..."</span>,
+  <span class="k">"bank_account_holder_name"</span>: <span class="s">"JANE DOE"</span>
+}</pre></div></div>
+      </div>
+    </section>
+
+    <footer>Hecto Financial · 소액해외송금 — Thunes Money Transfer V2 / Transfers · Objects (내부 가이드)</footer>
+  </main>
+</div>
+
+<script>
+(function(){
+  var links=[].slice.call(document.querySelectorAll('aside.nav a'));
+  var secs=links.map(function(a){return document.querySelector(a.getAttribute('href'));});
+  function onScroll(){
+    var y=window.scrollY+120, idx=0;
+    for(var i=0;i<secs.length;i++){ if(secs[i]&&secs[i].offsetTop<=y) idx=i; }
+    links.forEach(function(a,i){ a.classList.toggle('on', i===idx); });
+  }
+  window.addEventListener('scroll',onScroll,{passive:true}); onScroll();
+})();
+</script>
+</body>
+</html>
